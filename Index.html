@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nano Banana Gallery 🍌</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --bg: #fff9c4; --card: #ffffff; --text: #333; --border: gold; --accent: #ffd700;
+        }
+        body.dark-mode {
+            --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #444; --accent: #ffee00;
+        }
+        body { 
+            font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text);
+            text-align: center; padding: 20px; margin: 0; transition: 0.3s;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 100 100"><text x="50%" y="50%" font-size="30" text-anchor="middle" dy=".3em" opacity="0.1">🍌</text></svg>');
+        }
+        h1 { background: var(--accent); padding: 10px 30px; border-radius: 50px; border: 4px solid #fff; display: inline-block; cursor: pointer; color: #3e2723; }
+        .container { background: var(--card); padding: 20px; border-radius: 20px; max-width: 500px; margin: 10px auto; border: 2px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input[type="text"] { padding: 12px; border-radius: 10px; border: 1px solid #ccc; width: 80%; text-align: center; margin-bottom: 10px; background: var(--card); color: var(--text); }
+        
+        .tabs { margin: 20px 0; }
+        button { border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 50px; margin: 5px; transition: 0.2s; }
+        .tab-btn { background: var(--card); border: 2px solid var(--border); color: var(--text); }
+        .tab-btn.active { background: var(--accent); color: black; box-shadow: 0 0 10px orange; }
+        .upload-btn { background: #4caf50; color: white; width: 100%; }
+        .night-toggle { position: fixed; top: 20px; left: 20px; background: #333; color: white; }
+
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 20px auto; }
+        .card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; text-align: right; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 200px; object-fit: cover; cursor: pointer; }
+        .card-content { padding: 12px; }
+        .actions { display: flex; gap: 8px; margin-top: 10px; }
+        .action-btn { background: #eee; color: #333; font-size: 0.8rem; padding: 5px 10px; }
+        body.dark-mode .action-btn { background: #333; color: white; }
+
+        .comments { display: none; padding: 10px; background: rgba(0,0,0,0.05); border-top: 1px solid var(--border); max-height: 200px; overflow-y: auto; }
+        .comment { font-size: 0.8rem; border-bottom: 1px solid #ddd; padding: 5px 0; }
+        .comment b { color: #d84315; }
+
+        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center; flex-direction:column; }
+        #overlay img { max-width:90%; max-height:80%; border: 3px solid white; }
+        .close-btn { background: white; color: black; margin-top: 20px; padding: 10px 30px; font-size: 1.2rem; }
+
+        .spy { display: none; font-size: 0.6rem; color: #888; font-family: monospace; direction: ltr; }
+        body.admin .spy { display: block; }
+    </style>
+</head>
+<body>
+
+    <button class="night-toggle" onclick="toggleNight()">🌙 מצב לילה/יום</button>
+
+    <div id="overlay">
+        <img id="fullImg" src="">
+        <button class="close-btn" onclick="closeImg()">חזרה לגלריה ↩️</button>
+    </div>
+
+    <h1 onclick="secretClick()">Nano Banana Gallery 🍌</h1>
+
+    <div class="tabs">
+        <button id="btn-real" onclick="switchTab('real')" class="tab-btn active">📸 גלריה אמיתית</button>
+        <button id="btn-nano" onclick="switchTab('nano')" class="tab-btn">🍌 גלריה ננו בננה</button>
+    </div>
+
+    <div class="container">
+        <input type="text" id="uploaderName" placeholder="השם שלך">
+        <button class="upload-btn" onclick="checkUpload()">➕ העלה תמונה</button>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="uploadFile()">
+        <p id="status"></p>
+    </div>
+
+    <div id="gallery" class="gallery"></div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBR9taEgDlp4CaFa1oDlA2wM9ENoZD2V9U",
+          authDomain: "nano-banana-gallery-4e291.firebaseapp.com",
+          projectId: "nano-banana-gallery-4e291",
+          storageBucket: "nano-banana-gallery-4e291.firebasestorage.app",
+          messagingSenderId: "843216131791",
+          appId: "1:843216131791:web:e63ec1ab2f70b0808dc9ba"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        let currentTab = 'real';
+        let clicks = 0;
+
+        function toggleNight() { document.body.classList.toggle('dark-mode'); }
+        function secretClick() { clicks++; if(clicks===3){ if(prompt("סיסמה:")==="1234") document.body.classList.add('admin'); clicks=0; } }
+        function switchTab(t) { currentTab=t; document.getElementById('btn-real').className=t==='real'?'tab-btn active':'tab-btn'; document.getElementById('btn-nano').className=t==='nano'?'tab-btn active':'tab-btn'; loadImages(); }
+        function checkUpload() { if(!document.getElementById('uploaderName').value) return alert("כתוב שם!"); document.getElementById('fileInput').click(); }
+        function openImg(u) { document.getElementById('fullImg').src=u; document.getElementById('overlay').style.display='flex'; }
+        function closeImg() { document.getElementById('overlay').style.display='none'; }
+
+        function uploadFile() {
+            const file = document.getElementById('fileInput').files[0];
+            const name = document.getElementById('uploaderName').value;
+            if(!file) return;
+            document.getElementById('status').innerText = "מעלה... ⏳";
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const max = 800; let w=img.width, h=img.height;
+                    if(w>h){if(w>max){h*=max/w;w=max}}else{if(h>max){w*=max/h;h=max}}
+                    canvas.width=w; canvas.height=h; ctx.drawImage(img,0,0,w,h);
+                    db.collection("banana_v3").add({
+                        img: canvas.toDataURL('image/jpeg', 0.6),
+                        user: name, tab: currentTab, likes: 0,
+                        date: firebase.firestore.FieldValue.serverTimestamp(),
+                        dev: navigator.userAgent.includes("Mobile")?"Mobile":"PC",
+                        uid: localStorage.getItem('uid') || (localStorage.setItem('uid', Math.random().toString(36).substr(2,5)), localStorage.getItem('uid'))
+                    }).then(() => document.getElementById('status').innerText = "הועלה! ✅");
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadImages() {
+            db.collection("banana_v3").orderBy("date", "desc").onSnapshot(snap => {
+                const gal = document.getElementById('gallery'); gal.innerHTML = "";
+                snap.forEach(doc => {
+                    const d = doc.data(); if(d.tab !== currentTab) return;
+                    const id = doc.id;
+                    const card = document.createElement('div'); card.className = 'card';
+                    card.innerHTML = `
+                        <img src="${d.img}" onclick="openImg('${d.img}')">
+                        <div class="card-content">
+                            <b>👤 ${d.user}</b>
+                            <div class="actions">
+                                <button class="action-btn" onclick="addLike('${id}')">🍌 ${d.likes||0}</button>
+                                <button class="action-btn" onclick="toggleCom('${id}')">💬 תגובות</button>
+                                <button class="action-btn" onclick="postCom('${id}')">➕ הגב</button>
+                            </div>
+                            <div class="spy">UID: ${d.uid} | DEV: ${d.dev}</div>
+                            <div class="comments" id="com-${id}">טוען...</div>
+                        </div>`;
+                    gal.appendChild(card); loadComments(id);
+                });
+            });
+        }
+
+        function addLike(id) { db.collection("banana_v3").doc(id).update({likes: firebase.firestore.FieldValue.increment(1)}); }
+        function toggleCom(id) { const e = document.getElementById('com-'+id); e.style.display = e.style.display==='block'?'none':'block'; }
+        function postCom(id) { const u=prompt("שם:"), t=prompt("תגובה:"); if(u&&t) db.collection("banana_v3").doc(id).collection("comments").add({u, t, d: new Date()}); }
+
+        function loadComments(id) {
+            db.collection("banana_v3").doc(id).collection("comments").orderBy("d", "asc").onSnapshot(snap => {
+                const e = document.getElementById('com-'+id); e.innerHTML = snap.empty ? "אין תגובות" : "";
+                snap.forEach(doc => {
+                    const c = doc.data(); const time = c.d.toDate ? c.d.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "";
+                    e.innerHTML += `<div class="comment"><b>${c.u}:</b> ${c.t} <span style="font-size:0.6rem; color:#888">(${time})</span></div>`;
+                });
+            });
+        }
+        loadImages();
+    </script>
+</body>
+</html>
