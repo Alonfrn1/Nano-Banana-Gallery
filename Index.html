@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nano Banana Gallery & Chat 🍌</title>
+    <title>Nano Banana Gallery VIP 👑</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         :root {
             --bg: #fff9c4; --card: #ffffff; --text: #333; --border: gold; --accent: #ffd700;
@@ -18,15 +21,32 @@
             text-align: center; padding: 20px; margin: 0; transition: 0.3s;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 100 100"><text x="50%" y="50%" font-size="30" text-anchor="middle" dy=".3em" opacity="0.1">🍌</text></svg>');
         }
-        h1 { background: var(--accent); padding: 10px 30px; border-radius: 50px; border: 4px solid #fff; display: inline-block; cursor: pointer; color: #3e2723; user-select: none; }
         
+        h1 { background: var(--accent); padding: 10px 30px; border-radius: 50px; border: 4px solid #fff; display: inline-block; cursor: pointer; color: #3e2723; user-select: none; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .countdown { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: #d84315; background: rgba(255,255,255,0.5); display: inline-block; padding: 5px 15px; border-radius: 20px; }
+        body.dark-mode .countdown { color: #ff9800; background: rgba(0,0,0,0.5); }
+
+        .king-section { 
+            background: linear-gradient(45deg, #ffd700, #ffecb3); 
+            padding: 15px; border-radius: 20px; margin: 20px auto; max-width: 400px;
+            border: 4px solid white; box-shadow: 0 0 20px gold; position: relative;
+            display: none;
+        }
+        .king-badge { position: absolute; top: -15px; right: -15px; font-size: 3rem; transform: rotate(15deg); }
+        .king-title { font-weight: bold; font-size: 1.5rem; color: #5d4037; margin-bottom: 10px; }
+        .king-img { width: 100%; height: 200px; object-fit: cover; border-radius: 10px; border: 2px solid white; }
+
         .container { background: var(--card); padding: 20px; border-radius: 20px; max-width: 500px; margin: 10px auto; border: 2px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
+        .avatar-selection { margin-bottom: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .avatar-option { font-size: 1.8rem; cursor: pointer; padding: 5px; border-radius: 50%; transition: 0.2s; border: 2px solid transparent; opacity: 0.6; }
+        .avatar-option:hover { transform: scale(1.1); opacity: 1; }
+        .avatar-option.selected { border-color: var(--accent); opacity: 1; transform: scale(1.2); background: rgba(255, 215, 0, 0.2); }
+
         input[type="text"], textarea { 
             padding: 12px; border-radius: 10px; border: 1px solid #ccc; width: 85%; 
-            text-align: center; margin-bottom: 10px; background: var(--card); color: var(--text); font-family: inherit;
+            text-align: center; margin-bottom: 10px; background: var(--card); color: var(--text); 
         }
-        textarea { resize: none; height: 60px; }
         
         .tabs { margin: 20px 0; display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
         button { border: none; padding: 10px 15px; font-weight: bold; cursor: pointer; border-radius: 50px; margin: 2px; transition: 0.2s; font-size: 0.9rem; }
@@ -35,23 +55,21 @@
         
         .upload-btn { background: #4caf50; color: white; width: 100%; margin-top: 5px; font-size: 1.1rem; }
         .chat-btn { background: #2196F3; color: white; width: 100%; margin-top: 5px; font-size: 1.1rem; }
-        
-        .night-toggle { position: fixed; top: 10px; left: 10px; background: #333; color: white; z-index: 100; font-size: 0.8rem; }
+        .bot-btn { background: #9c27b0; color: white; width: 100%; margin-top: 10px; font-size: 1rem; }
+        .night-toggle { position: fixed; top: 10px; left: 10px; background: #333; color: white; z-index: 100; font-size: 0.8rem; border-radius: 50px; padding: 5px 10px; }
 
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 20px auto; }
         
-        .card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; text-align: right; box-shadow: 0 4px 8px rgba(0,0,0,0.1); position: relative; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
+        .card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; text-align: right; box-shadow: 0 4px 8px rgba(0,0,0,0.1); position: relative; }
         .card img { width: 100%; height: 220px; object-fit: cover; cursor: pointer; }
         
         .card-content { padding: 15px; }
         .user-name { font-weight: bold; font-size: 1.1rem; color: var(--accent); text-shadow: 0px 0px 1px black; }
         .upload-date { font-size: 0.75rem; color: #888; margin-bottom: 5px; }
-        .description { font-size: 0.95rem; margin: 8px 0; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 8px; border-right: 4px solid var(--accent); }
-        
-        /* עיצוב מיוחד להודעות צ'אט */
         .chat-text { font-size: 1.1rem; padding: 10px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; margin: 10px 0; white-space: pre-wrap; }
+        
+        .bot-message { background: rgba(156, 39, 176, 0.15) !important; border: 2px solid #9c27b0; }
+        .bot-name { color: #9c27b0 !important; }
 
         .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
         .action-btn { background: #eee; color: #333; font-size: 0.85rem; padding: 8px 12px; flex: 1; border-radius: 8px; }
@@ -59,25 +77,17 @@
         
         .delete-btn { display: none; background: #ff4444; color: white; flex: 100%; margin-top: 5px; }
         body.admin .delete-btn { display: block; }
-
-        .comments { display: none; padding: 10px; background: rgba(0,0,0,0.03); border-top: 1px solid var(--border); max-height: 200px; overflow-y: auto; }
-        .comment { font-size: 0.85rem; border-bottom: 1px solid #ddd; padding: 8px 0; }
-        .comment b { color: #d84315; }
-
+        
+        .hidden { display: none; }
+        
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center; flex-direction:column; }
         #overlay img { max-width:95%; max-height:85%; border: 2px solid white; box-shadow: 0 0 30px var(--accent); border-radius: 10px; }
         .close-btn { background: var(--accent); color: black; margin-top: 20px; padding: 10px 40px; font-size: 1.2rem; }
-
-        .spy { display: none; font-size: 0.6rem; color: #0f0; background: black; padding: 5px; margin-top: 5px; direction: ltr; }
-        body.admin .spy { display: block; }
-        
-        /* הסתרת אזורים */
-        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <button class="night-toggle" onclick="toggleNight()">🌙 לילה/יום</button>
+    <button class="night-toggle" onclick="toggleNight()">🌙</button>
 
     <div id="overlay">
         <img id="fullImg" src="">
@@ -85,6 +95,14 @@
     </div>
 
     <h1 onclick="secretClick()">Nano Banana Gallery 🍌</h1>
+    
+    <div><div class="countdown" id="countdown">טוען שעון...</div></div>
+
+    <div id="kingSection" class="king-section">
+        <div class="king-badge">👑</div>
+        <div class="king-title">מלך הבננה השבועי!</div>
+        <div id="kingContent"></div>
+    </div>
 
     <div class="tabs">
         <button id="btn-real" onclick="switchTab('real')" class="tab-btn active">📸 גלריה אמיתית</button>
@@ -93,6 +111,9 @@
     </div>
 
     <div class="container">
+        <h3 style="margin-top:0;">בחר דמות:</h3>
+        <div id="avatar-selection" class="avatar-selection"></div>
+
         <input type="text" id="uploaderName" placeholder="השם שלך (חובה)" style="border: 2px solid var(--accent);">
         
         <div id="image-upload-area">
@@ -104,6 +125,7 @@
         <div id="chat-upload-area" class="hidden">
             <textarea id="chatInput" placeholder="כתוב כאן הודעה לחברים..."></textarea>
             <button class="chat-btn" onclick="sendChat()">🚀 שלח הודעה</button>
+            <button class="bot-btn" onclick="triggerBot()">🤖 בננה-בוט: רד עליי!</button>
         </div>
         
         <p id="status" style="font-weight:bold; color:orange;"></p>
@@ -123,90 +145,133 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        // משתמשים באותו מאגר כדי לשמור על התמונות הישנות!
         const COLLECTION_NAME = "banana_v3"; 
         
         let currentTab = 'real';
         let clicks = 0;
+        const avatars = ['🍌', '🦍', '😎', '🤖', '👽', '💩', '🤡', '👻', '⚽', '🚬'];
+        let selectedAvatar = avatars[0];
 
-        function toggleNight() { document.body.classList.toggle('dark-mode'); }
-        
-        function secretClick() { 
-            clicks++; 
-            if(clicks===3){ 
-                if(prompt("סיסמת מנהל:")==="1234") {
-                    document.body.classList.add('admin'); 
-                    alert("מצב מנהל הופעל! 🕵️‍♂️");
+        // ==========================================
+        //  ⬇️ מאגר הירידות הגדול (Savage Edition) ⬇️
+        // ==========================================
+        const roasts = [
+            // טסטים ונהיגה
+            "הטסטר שלך ביקש תוספת סיכון למשכורת אחרי הטסט איתך.",
+            "אתה נוהג בנתיב השמאלי על 60 וחושב שכולם צופרים לך כי הם מעריצים.",
+            "יש לך רישיון לבימבה, וגם זה על תנאי.",
+            "איך נכשלת בטסט פנימי? הבוחן זה המורה שלך!",
+            "אתה עושה חניה במקביל כמו שאתה מדבר עם בנות – עקום ומביך.",
+
+            // בנות ודייטים
+            "בנות לא מסננות אותך, הן פשוט חוסמות את המספר מראש.",
+            "הדייט היחיד שהיה לך השנה זה עם הפסיכולוגית בצו ראשון.",
+            "אתה מקבל בטינדר רק פרסומות.",
+            "יש לך ריז (Rizz) של מורה למתמטיקה.",
+            "אחי, אם היית קצת יותר מכוער, היית בלתי נראה.",
+
+            // אבחונים ובית ספר
+            "יש לך כל כך הרבה הקלות, שבקרוב המורה תעשה את המבחן במקומך.",
+            "האבחון שלך זה לא 'הפרעת קשב', זה 'הפרעת חוסר עניין בחיים'.",
+            "קיבלת הארכת זמן בטסט? או הקראה של התמרורים?",
+            "אתה בא לבית ספר רק בשביל ההפסקות והוויפ בשירותים.",
+            "התעודה שלך נראית כמו תוצאות לוטו, רק מספרים נמוכים.",
+
+            // מכון וגוף
+            "אתה שותה אבקת חלבון או אבקת ניפוח אגו?",
+            "היד קדמית שלך נראית כמו נקניקייה, והאחורית כמו פירה.",
+            "אתה עושה סקוואט עם המשקל של המוט וצועק כאילו זה 200 קילו.",
+            "רגליים של תרנגולת, בטן של בירה, ואגו של מר עולם.",
+            "אתה מתאמן שנתיים והתוצאה היחידה היא פריצת דיסק.",
+
+            // עישון וסטלות (לייט)
+            "הריאות שלך נראות כמו האגזוז של הטויוטה של סבא שלי.",
+            "אתה מעשן וויפ בטעם תות וחושב שאתה גבר מסוכן.",
+            "אתה נראה כמו מישהו שעישן אורגנו וחשב שזה עשה לו משהו.",
+            "העיניים שלך כל כך אדומות שאפשר לעצור איתן תנועה.",
+            "אתה מסתובב עם סיגריה אלקטרונית בצוואר כאילו זה מדליה אולימפית.",
+
+            // כדורגל (ארסנל/בארסה)
+            "אתה אוהד ארסנל? זה מסביר למה אתה רגיל לאכזבות בחיים.",
+            "ההגנה של ברצלונה יותר יציבה מהמצב הנפשי שלך.",
+            "אתה משחק כדורגל כמו שאתה לומד – בלי חשק ובלי תוצאות.",
+            
+            // כללי
+            "המוח שלך במצב טיסה כבר 17 שנה.",
+            "אם טיפשות הייתה כוח על, היית הנוקמים לבד.",
+            "אתה הסיבה שיש הוראות שימוש על שמפו."
+        ];
+
+        function initAvatars() {
+            const container = document.getElementById('avatar-selection');
+            avatars.forEach(av => {
+                const el = document.createElement('span');
+                el.className = 'avatar-option';
+                el.innerText = av;
+                if(av === selectedAvatar) el.classList.add('selected');
+                el.onclick = function() {
+                    document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected'));
+                    el.classList.add('selected');
+                    selectedAvatar = av;
                 }
-                clicks=0; 
-            } 
+                container.appendChild(el);
+            });
         }
+        initAvatars();
 
-        function switchTab(t) { 
-            currentTab = t; 
-            
-            // עדכון כפתורים
-            document.getElementById('btn-real').className = t==='real'?'tab-btn active':'tab-btn'; 
-            document.getElementById('btn-nano').className = t==='nano'?'tab-btn active':'tab-btn'; 
-            document.getElementById('btn-chat').className = t==='chat'?'tab-btn active':'tab-btn'; 
-
-            // החלפת תיבות קלט
-            const imgArea = document.getElementById('image-upload-area');
-            const chatArea = document.getElementById('chat-upload-area');
-            
-            if (t === 'chat') {
-                imgArea.classList.add('hidden');
-                chatArea.classList.remove('hidden');
-            } else {
-                imgArea.classList.remove('hidden');
-                chatArea.classList.add('hidden');
-            }
-
-            loadContent(); 
-        }
-
-        function checkUpload() { 
-            if(!document.getElementById('uploaderName').value) return alert("חובה לכתוב שם!"); 
-            document.getElementById('fileInput').click(); 
-        }
-
-        function openImg(u) { document.getElementById('fullImg').src=u; document.getElementById('overlay').style.display='flex'; }
-        function closeImg() { document.getElementById('overlay').style.display='none'; }
-
-        // שליחת הודעת צ'אט
-        function sendChat() {
-            const name = document.getElementById('uploaderName').value;
-            const text = document.getElementById('chatInput').value;
-            
-            if(!name) return alert("מי אתה? כתוב שם!");
-            if(!text) return alert("אי אפשר לשלוח הודעה ריקה!");
-
-            document.getElementById('status').innerText = "שולח... 🚀";
-
+        function triggerBot() {
+            const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
+            triggerConfetti();
             db.collection(COLLECTION_NAME).add({
-                type: 'chat', // סימון שזה צ'אט ולא תמונה
-                text: text,
-                user: name,
-                tab: 'chat',
-                likes: 0,
-                date: firebase.firestore.FieldValue.serverTimestamp(),
-                dev: navigator.userAgent.includes("Mobile")?"Mobile":"PC",
-                uid: localStorage.getItem('uid') || (localStorage.setItem('uid', Math.random().toString(36).substr(2,5)), localStorage.getItem('uid'))
-            }).then(() => {
-                document.getElementById('status').innerText = "ההודעה נשלחה! ✅";
-                document.getElementById('chatInput').value = "";
+                type: 'chat', text: randomRoast, user: 'BananaBot 🤖', avatar: '🤖', tab: 'chat', likes: 0,
+                date: firebase.firestore.FieldValue.serverTimestamp(), isBot: true
             });
         }
 
-        // העלאת תמונה
+        const birthdayDate = new Date("April 22, 2026 20:00:00").getTime();
+        setInterval(function() {
+            const now = new Date().getTime();
+            const distance = birthdayDate - now;
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            document.getElementById("countdown").innerHTML = "🎂 יום הולדת 18 עוד: " + days + " ימים ו-" + hours + " שעות ";
+        }, 1000);
+
+        function toggleNight() { document.body.classList.toggle('dark-mode'); }
+        function secretClick() { clicks++; if(clicks===3){ if(prompt("סיסמת מנהל:")==="1234") { document.body.classList.add('admin'); alert("מצב מנהל הופעל! 🕵️‍♂️"); } clicks=0; } }
+
+        function switchTab(t) { 
+            currentTab = t; 
+            document.getElementById('btn-real').className = t==='real'?'tab-btn active':'tab-btn'; 
+            document.getElementById('btn-nano').className = t==='nano'?'tab-btn active':'tab-btn'; 
+            document.getElementById('btn-chat').className = t==='chat'?'tab-btn active':'tab-btn'; 
+            const imgArea = document.getElementById('image-upload-area');
+            const chatArea = document.getElementById('chat-upload-area');
+            if (t === 'chat') { imgArea.classList.add('hidden'); chatArea.classList.remove('hidden'); } else { imgArea.classList.remove('hidden'); chatArea.classList.add('hidden'); }
+            loadContent(); 
+        }
+
+        function triggerConfetti() { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
+        function checkUpload() { if(!document.getElementById('uploaderName').value) return alert("חובה לכתוב שם!"); document.getElementById('fileInput').click(); }
+        function openImg(u) { document.getElementById('fullImg').src=u; document.getElementById('overlay').style.display='flex'; }
+        function closeImg() { document.getElementById('overlay').style.display='none'; }
+
+        function sendChat() {
+            const name = document.getElementById('uploaderName').value;
+            const text = document.getElementById('chatInput').value;
+            if(!name || !text) return alert("חסרים פרטים");
+            db.collection(COLLECTION_NAME).add({
+                type: 'chat', text: text, user: name, avatar: selectedAvatar, tab: 'chat', likes: 0,
+                date: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => { triggerConfetti(); document.getElementById('chatInput').value = ""; });
+        }
+
         function uploadFile() {
             const file = document.getElementById('fileInput').files[0];
             const name = document.getElementById('uploaderName').value;
             const desc = document.getElementById('descInput').value;
-            
             if(!file) return;
-            document.getElementById('status').innerText = "מעלה... רגע... ⏳";
-            
+            document.getElementById('status').innerText = "מעלה...";
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
@@ -216,130 +281,66 @@
                     const max = 800; let w=img.width, h=img.height;
                     if(w>h){if(w>max){h*=max/w;w=max}}else{if(h>max){w*=max/h;h=max}}
                     canvas.width=w; canvas.height=h; ctx.drawImage(img,0,0,w,h);
-                    
                     db.collection(COLLECTION_NAME).add({
-                        type: 'image',
-                        img: canvas.toDataURL('image/jpeg', 0.6),
-                        user: name,
-                        desc: desc,
-                        tab: currentTab,
-                        likes: 0,
+                        type: 'image', img: canvas.toDataURL('image/jpeg', 0.6),
+                        user: name, avatar: selectedAvatar, desc: desc, tab: currentTab, likes: 0,
                         date: firebase.firestore.FieldValue.serverTimestamp(),
-                        dev: navigator.userAgent.includes("Mobile")?"Mobile":"PC",
                         uid: localStorage.getItem('uid') || (localStorage.setItem('uid', Math.random().toString(36).substr(2,5)), localStorage.getItem('uid'))
-                    }).then(() => {
-                        document.getElementById('status').innerText = "הועלה בהצלחה! ✅";
-                        document.getElementById('descInput').value = "";
-                        document.getElementById('fileInput').value = "";
-                    });
+                    }).then(() => { triggerConfetti(); document.getElementById('status').innerText = ""; document.getElementById('descInput').value = ""; });
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // טעינת תוכן (תמונות או הודעות)
+        function updateKing() {
+            db.collection(COLLECTION_NAME).where("type", "==", "image").orderBy("likes", "desc").limit(1).onSnapshot(snap => {
+                const kingDiv = document.getElementById('kingSection');
+                const content = document.getElementById('kingContent');
+                if (snap.empty) { kingDiv.style.display = "none"; } else {
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        if (d.likes > 0) {
+                            kingDiv.style.display = "block";
+                            content.innerHTML = `<img src="${d.img}" class="king-img" onclick="openImg('${d.img}')"><div style="margin-top:10px; font-weight:bold;">הועלה ע"י: ${d.avatar||'👤'} ${d.user}</div><div style="color:#d84315;">🍌 ${d.likes} לייקים</div>`;
+                        } else { kingDiv.style.display = "none"; }
+                    });
+                }
+            });
+        }
+
         function loadContent() {
+            updateKing();
             db.collection(COLLECTION_NAME).orderBy("date", "desc").onSnapshot(snap => {
-                const gal = document.getElementById('gallery'); 
-                gal.innerHTML = "";
-                
+                const gal = document.getElementById('gallery'); gal.innerHTML = "";
                 snap.forEach(doc => {
                     const d = doc.data(); 
-                    
-                    // סינון לפי טאבים
                     if(d.tab !== currentTab) return;
-                    
                     const id = doc.id;
                     let dateStr = "";
-                    if(d.date) {
-                        const dateObj = d.date.toDate();
-                        dateStr = dateObj.toLocaleDateString('he-IL') + " | " + dateObj.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
-                    }
+                    if(d.date) { const dateObj = d.date.toDate(); dateStr = dateObj.toLocaleDateString('he-IL') + " | " + dateObj.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'}); }
 
-                    const card = document.createElement('div'); 
-                    card.className = 'card';
+                    const card = document.createElement('div'); card.className = 'card';
+                    const userDisplay = `${d.avatar || '👤'} ${d.user}`;
                     
-                    // בדיקה אם זה תמונה או צ'אט
                     let contentHTML = "";
-                    
                     if (d.type === 'chat') {
-                        // עיצוב לצ'אט
-                        contentHTML = `
-                            <div class="card-content">
-                                <div class="user-name">👤 ${d.user}</div>
-                                <div class="upload-date">${dateStr}</div>
-                                <div class="chat-text">${d.text}</div>
-                            </div>
-                        `;
+                        const botClass = d.isBot ? 'bot-message' : '';
+                        const nameClass = d.isBot ? 'bot-name' : '';
+                        contentHTML = `<div class="card-content ${botClass}"><div class="user-name ${nameClass}">${userDisplay}</div><div class="upload-date">${dateStr}</div><div class="chat-text">${d.text}</div></div>`;
                     } else {
-                        // עיצוב לתמונה
-                        contentHTML = `
-                            <img src="${d.img}" onclick="openImg('${d.img}')">
-                            <div class="card-content">
-                                <div class="user-name">👤 ${d.user}</div>
-                                <div class="upload-date">${dateStr}</div>
-                                ${d.desc ? `<div class="description">${d.desc}</div>` : ''}
-                            </div>
-                        `;
+                        contentHTML = `<img src="${d.img}" onclick="openImg('${d.img}')"><div class="card-content"><div class="user-name">${userDisplay}</div><div class="upload-date">${dateStr}</div>${d.desc ? `<div style="background:#f0f0f0; padding:5px; border-radius:5px; margin:5px 0;">${d.desc}</div>` : ''}</div>`;
                     }
 
-                    // כפתורים משותפים לכולם
-                    card.innerHTML = contentHTML + `
-                        <div class="card-content" style="padding-top:0;">
-                            <div class="actions">
-                                <button class="action-btn" onclick="addLike('${id}')">🍌 ${d.likes||0}</button>
-                                ${d.type !== 'chat' ? `<button class="action-btn" id="btn-com-${id}" onclick="toggleCom('${id}')">💬 תגובות</button>` : ''} 
-                                ${d.type !== 'chat' ? `<button class="action-btn" onclick="postCom('${id}')">➕ הגב</button>` : ''}
-                                <button class="delete-btn" onclick="deletePost('${id}')">🗑️ מחיקה</button>
-                            </div>
-                            <div class="spy">UID: ${d.uid}</div>
-                            ${d.type !== 'chat' ? `<div class="comments" id="com-${id}">טוען...</div>` : ''}
-                        </div>`;
-                        
+                    card.innerHTML = contentHTML + `<div class="card-content" style="padding-top:0;"><div class="actions"><button class="action-btn" onclick="addLike('${id}')">🍌 ${d.likes||0}</button><button class="delete-btn" onclick="deletePost('${id}')">🗑️ מחיקה</button></div></div>`;
                     gal.appendChild(card); 
-                    
-                    if(d.type !== 'chat') loadComments(id);
                 });
             });
         }
 
-        function addLike(id) { 
-            db.collection(COLLECTION_NAME).doc(id).update({likes: firebase.firestore.FieldValue.increment(1)}); 
-        }
+        function addLike(id) { db.collection(COLLECTION_NAME).doc(id).update({likes: firebase.firestore.FieldValue.increment(1)}); triggerConfetti(); }
+        function deletePost(id) { if(confirm("למחוק?")) db.collection(COLLECTION_NAME).doc(id).delete(); }
 
-        function deletePost(id) {
-            if(confirm("למחוק את זה? 🤔")) {
-                db.collection(COLLECTION_NAME).doc(id).delete();
-            }
-        }
-
-        function toggleCom(id) { 
-            const e = document.getElementById('com-'+id); 
-            e.style.display = e.style.display==='block'?'none':'block'; 
-        }
-
-        function postCom(id) { 
-            const u=prompt("שם המגיב:");
-            if(!u) return;
-            const t=prompt("תוכן התגובה:"); 
-            if(u&&t) db.collection(COLLECTION_NAME).doc(id).collection("comments").add({u, t, d: new Date()}); 
-        }
-
-        function loadComments(id) {
-            db.collection(COLLECTION_NAME).doc(id).collection("comments").orderBy("d", "asc").onSnapshot(snap => {
-                const e = document.getElementById('com-'+id); 
-                const btn = document.getElementById('btn-com-'+id);
-                if(btn) btn.innerText = `💬 תגובות (${snap.size})`;
-                
-                e.innerHTML = snap.empty ? "אין תגובות." : "";
-                snap.forEach(doc => {
-                    const c = doc.data(); 
-                    e.innerHTML += `<div class="comment"><b>${c.u}:</b> ${c.t}</div>`;
-                });
-            });
-        }
-        
         loadContent();
     </script>
 </body>
