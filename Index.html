@@ -72,7 +72,7 @@
         .btn-small { background: #eee; color: #333; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; flex: 1; }
         body.dark-mode .btn-small { background: #333; color: #fff; }
 
-        /* --- אזור תגובות בתמונה --- */
+        /* --- אזור תגובות --- */
         .comments-section { display: none; background: rgba(0,0,0,0.03); padding: 10px; margin-top: 10px; border-radius: 10px; font-size: 0.9rem; }
         .comment-row { border-bottom: 1px solid var(--border); padding: 5px 0; }
         .comment-user { font-weight: bold; color: #ef6c00; }
@@ -154,6 +154,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        // מוודאים שאנחנו משתמשים באותו מאגר נתונים כמו תמיד
         const COLLECTION_NAME = "banana_v3"; 
         
         let currentTab = 'chat';
@@ -223,9 +224,15 @@
             if (currentTab === 'chat') {
                 container.className = 'chat-list';
                 container.innerHTML = '';
-                allData.forEach(d => {
+                
+                // בצ'אט אנחנו רוצים מהישן לחדש (הודעה חדשה למטה)
+                // מכיוון ש-allData מגיע הפוך (חדש למעלה), אנחנו הופכים אותו רק לצורך הצגת הצ'אט
+                let chatData = [...allData].reverse(); 
+
+                chatData.forEach(d => {
                     if (d.type && d.type !== 'chat') return; 
                     if (!d.type && d.img) return;
+
                     if (d.type === 'chat') {
                         const isMe = d.user === myName;
                         const isBot = d.isBot;
@@ -241,15 +248,19 @@
                         container.appendChild(bubble);
                     }
                 });
+                // גלילה למטה
+                setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
 
             } else {
+                // גלריה - רוצים חדש למעלה (allData כבר ממויין ככה)
                 container.className = 'gallery-grid';
                 container.innerHTML = '';
+
                 allData.forEach(d => {
                     const isImage = (d.type === 'image') || (!d.type && d.img);
                     if (!isImage || d.tab !== currentTab) return;
                     
-                    let timeStr = "תאריך לא ידוע";
+                    let timeStr = "";
                     if(d.date) {
                          const dateObj = d.date.toDate();
                          timeStr = dateObj.toLocaleDateString('he-IL') + ' ' + dateObj.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
@@ -266,7 +277,7 @@
                             
                             <div class="card-actions">
                                 <button class="btn-small" onclick="addLike('${d.id}')">🍌 ${d.likes||0}</button>
-                                <button class="btn-small" id="btn-com-${d.id}" onclick="toggleComments('${d.id}')">💬 תגובות (0)</button>
+                                <button class="btn-small" id="btn-com-${d.id}" onclick="toggleComments('${d.id}')">💬 תגובות</button>
                                 <button class="btn-small" onclick="addComment('${d.id}')">➕ הגב</button>
                                 ${document.body.classList.contains('admin') ? `<button class="btn-small" style="background:#ffcdd2; color:red;" onclick="deletePost('${d.id}')">🗑️</button>` : ''}
                             </div>
@@ -274,7 +285,7 @@
                         </div>
                     `;
                     container.appendChild(card);
-                    // טעינת תגובות לכל כרטיס
+                    // טעינת תגובות ישנות
                     loadComments(d.id);
                 });
             }
@@ -344,7 +355,7 @@
         function openImg(u) { document.getElementById('fullImg').src=u; document.getElementById('overlay').style.display='flex'; }
         function closeImg() { document.getElementById('overlay').style.display='none'; }
 
-        // --- לוגיקת תגובות ---
+        // --- מנגנון התגובות (הישן והטוב) ---
         function toggleComments(id) {
             const el = document.getElementById('comments-' + id);
             el.style.display = (el.style.display === 'block') ? 'none' : 'block';
@@ -355,11 +366,8 @@
             if (!name) return;
             const text = prompt("מה התגובה?");
             if (!text) return;
-            
             db.collection(COLLECTION_NAME).doc(id).collection("comments").add({
-                user: name,
-                text: text,
-                date: new Date()
+                user: name, text: text, date: new Date()
             });
         }
 
@@ -372,7 +380,7 @@
                 if(btn) btn.innerText = `💬 תגובות (${snap.size})`;
                 
                 if (snap.empty) {
-                    if(list) list.innerHTML = "אין תגובות עדיין.";
+                    if(list) list.innerHTML = "אין תגובות.";
                 } else {
                     let html = "";
                     snap.forEach(doc => {
@@ -391,16 +399,15 @@
             });
         }
 
-        db.collection(COLLECTION_NAME).orderBy("date", "asc").onSnapshot(snap => {
+        // שליפת מידע: "desc" אומר חדש למעלה. זה טוב לגלריה. לצ'אט נהפוך את זה בקוד.
+        db.collection(COLLECTION_NAME).orderBy("date", "desc").onSnapshot(snap => {
             allData = [];
             snap.forEach(doc => {
                 let d = doc.data();
                 d.id = doc.id;
                 allData.push(d);
             });
-            if(currentTab !== 'chat') allData.reverse();
             renderContent();
-            if(currentTab === 'chat') setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
         });
     </script>
 </body>
