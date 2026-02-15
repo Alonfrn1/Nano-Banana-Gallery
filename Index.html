@@ -11,20 +11,17 @@
 
     <style>
         :root {
-            --bg: #fff9c4; /* צהוב בננה */
+            --bg: #fff9c4;
             --card: #ffffff;
             --text: #333;
-            --accent: #ffd700; /* זהב */
-            --me-bubble: #fff176; /* בועה שלי - צהוב בהיר */
-            --other-bubble: #ffffff; /* בועה של אחרים - לבן */
+            --accent: #ffd700;
+            --me-bubble: #fff176;
+            --other-bubble: #ffffff;
+            --border: #e0e0e0;
         }
         body.dark-mode {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --text: #e0e0e0;
-            --accent: #ffee00;
-            --me-bubble: #fbc02d;
-            --other-bubble: #424242;
+            --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #ffee00;
+            --me-bubble: #fbc02d; --other-bubble: #424242; --border: #444;
         }
         body { 
             font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text);
@@ -59,60 +56,50 @@
 
         .night-toggle { position: fixed; top: 15px; left: 15px; background: #333; color: white; z-index: 2000; font-size: 1rem; border-radius: 50px; padding: 5px 10px; }
 
-        /* --- הגלריה --- */
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 10px; max-width: 800px; margin: 0 auto; }
-        .card-img { background: var(--card); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border: 1px solid var(--accent); }
-        .card-img img { width: 100%; height: 160px; object-fit: cover; }
-        .card-info { padding: 8px; font-size: 0.85rem; text-align: right; }
-
-        /* --- הצ'אט --- */
-        .chat-list { display: flex; flex-direction: column; gap: 8px; padding: 20px 10px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+        /* --- גלריה וכרטיסים --- */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; padding: 10px; max-width: 800px; margin: 0 auto; }
         
+        .card-img { 
+            background: var(--card); border-radius: 15px; overflow: hidden; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); border: 1px solid var(--border);
+            text-align: right; 
+        }
+        .card-img img { width: 100%; height: 220px; object-fit: cover; }
+        .card-info { padding: 12px; }
+        .card-date { font-size: 0.75rem; color: #888; margin-top: 5px; display: block; }
+        
+        .card-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .btn-small { background: #eee; color: #333; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; flex: 1; }
+        body.dark-mode .btn-small { background: #333; color: #fff; }
+
+        /* --- אזור תגובות בתמונה --- */
+        .comments-section { display: none; background: rgba(0,0,0,0.03); padding: 10px; margin-top: 10px; border-radius: 10px; font-size: 0.9rem; }
+        .comment-row { border-bottom: 1px solid var(--border); padding: 5px 0; }
+        .comment-user { font-weight: bold; color: #ef6c00; }
+        .comment-time { float: left; font-size: 0.7rem; color: #999; }
+
+        /* --- צ'אט --- */
+        .chat-list { display: flex; flex-direction: column; gap: 8px; padding: 20px 10px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
         .msg-row { display: flex; width: 100%; margin-bottom: 5px; }
         .msg-row.me { justify-content: flex-end; } 
         .msg-row.other { justify-content: flex-start; } 
         
         .msg-bubble {
-            max-width: 75%;
-            padding: 10px 15px;
-            border-radius: 15px;
-            position: relative;
-            font-size: 1rem;
-            line-height: 1.4;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            word-wrap: break-word;
-            text-align: right;
+            max-width: 75%; padding: 10px 15px; border-radius: 15px; position: relative;
+            font-size: 1rem; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            word-wrap: break-word; text-align: right;
         }
-
-        .msg-row.me .msg-bubble {
-            background-color: var(--me-bubble);
-            border-radius: 15px 0 15px 15px;
-            border: 1px solid #fdd835;
-        }
-
-        .msg-row.other .msg-bubble {
-            background-color: var(--other-bubble);
-            border-radius: 0 15px 15px 15px;
-            border: 1px solid #eee;
-        }
-        
-        .msg-row.bot .msg-bubble {
-            background-color: #f3e5f5;
-            border: 2px solid #ab47bc;
-            margin: 0 auto;
-            text-align: center;
-        }
+        .msg-row.me .msg-bubble { background-color: var(--me-bubble); border-radius: 15px 0 15px 15px; border: 1px solid #fdd835; }
+        .msg-row.other .msg-bubble { background-color: var(--other-bubble); border-radius: 0 15px 15px 15px; border: 1px solid #eee; }
+        .msg-row.bot .msg-bubble { background-color: #f3e5f5; border: 2px solid #ab47bc; margin: 0 auto; text-align: center; }
         body.dark-mode .msg-row.bot .msg-bubble { background-color: #4a148c; border-color: #7b1fa2; }
 
         .sender-name { font-size: 0.75rem; font-weight: bold; color: #ef6c00; margin-bottom: 4px; }
         .timestamp { font-size: 0.65rem; color: #999; text-align: left; margin-top: 4px; display: block; }
-        
-        .like-btn { font-size: 0.8rem; background: none; border: none; cursor: pointer; color: #888; float: left; margin-right: 5px; }
 
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:3000; justify-content:center; align-items:center; flex-direction:column; }
         #overlay img { max-width:95%; max-height:80%; border-radius: 10px; border: 2px solid white; }
         .close-btn { background: var(--accent); color: black; margin-top: 20px; padding: 10px 30px; border:none; border-radius:50px; font-weight:bold; cursor:pointer;}
-
         .hidden { display: none; }
     </style>
 </head>
@@ -136,7 +123,7 @@
 
     <div class="container">
         <div id="avatar-selection" class="avatar-selection"></div>
-        <input type="text" id="uploaderName" placeholder="השם שלך (כדי שהודעות יהיו בצד שמאל)" oninput="refreshChatView()">
+        <input type="text" id="uploaderName" placeholder="השם שלך (חובה)" oninput="refreshChatView()">
 
         <div id="chat-input-area" class="action-area">
             <textarea id="chatInput" placeholder="הקלד הודעה..."></textarea>
@@ -172,7 +159,6 @@
         let currentTab = 'chat';
         let clicks = 0;
         let allData = []; 
-
         const avatars = ['🍌', '🦍', '😎', '🤖', '👽', '💩', '🤡', '👻', '⚽', '🚬'];
         let selectedAvatar = avatars[0];
 
@@ -223,17 +209,10 @@
             currentTab = t;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(t === 'chat' ? 'btn-chat' : (t==='real'?'btn-real':'btn-nano')).classList.add('active');
-
             const chatArea = document.getElementById('chat-input-area');
             const imgArea = document.getElementById('img-input-area');
-            
-            if (t === 'chat') {
-                chatArea.classList.remove('hidden');
-                imgArea.classList.add('hidden');
-            } else {
-                chatArea.classList.add('hidden');
-                imgArea.classList.remove('hidden');
-            }
+            if (t === 'chat') { chatArea.classList.remove('hidden'); imgArea.classList.add('hidden'); } 
+            else { chatArea.classList.add('hidden'); imgArea.classList.remove('hidden'); }
             renderContent();
         }
 
@@ -244,86 +223,70 @@
             if (currentTab === 'chat') {
                 container.className = 'chat-list';
                 container.innerHTML = '';
-                
                 allData.forEach(d => {
-                    // מציגים רק הודעות צ'אט
                     if (d.type && d.type !== 'chat') return; 
-                    // אם אין TYPE בכלל (דאטה ישן), אנחנו נניח שזה תמונה ולא נציג בצ'אט
                     if (!d.type && d.img) return;
-
-                    // במקרה שנוצרו הודעות צ'אט בלי טייפ (נדיר, אבל ליתר ביטחון)
-                    // או שזה פשוט הטקסטים החדשים
                     if (d.type === 'chat') {
                         const isMe = d.user === myName;
                         const isBot = d.isBot;
-                        
                         let rowClass = 'other';
-                        if (isBot) rowClass = 'bot';
-                        else if (isMe) rowClass = 'me';
-
+                        if (isBot) rowClass = 'bot'; else if (isMe) rowClass = 'me';
                         const bubble = document.createElement('div');
                         bubble.className = `msg-row ${rowClass}`;
-                        
-                        let timeStr = "";
-                        if(d.date) timeStr = d.date.toDate().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
-
+                        let timeStr = d.date ? d.date.toDate().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'}) : "";
                         let nameHtml = '';
                         if (!isMe && !isBot) nameHtml = `<div class="sender-name">${d.avatar||''} ${d.user}</div>`;
                         if (isBot) nameHtml = `<div class="sender-name">🤖 בננה-בוט</div>`;
-
-                        bubble.innerHTML = `
-                            <div class="msg-bubble">
-                                ${nameHtml}
-                                <div>${d.text}</div>
-                                <div style="margin-top:5px;">
-                                    <button class="like-btn" onclick="addLike('${d.id}')">🍌 ${d.likes||0}</button>
-                                    <span class="timestamp">${timeStr}</span>
-                                </div>
-                            </div>
-                        `;
+                        bubble.innerHTML = `<div class="msg-bubble">${nameHtml}<div>${d.text}</div><div style="margin-top:5px;"><button class="like-btn" onclick="addLike('${d.id}')">🍌 ${d.likes||0}</button><span class="timestamp">${timeStr}</span></div></div>`;
                         container.appendChild(bubble);
                     }
                 });
 
             } else {
-                // מצב גלריה (תמונות)
                 container.className = 'gallery-grid';
                 container.innerHTML = '';
-
                 allData.forEach(d => {
-                    // כאן התיקון הגדול:
-                    // מציגים אם זה סומן כ'image' או שאין סוג בכלל (תמונות ישנות)
-                    // וגם מוודאים שזה בטאב הנכון
-                    
                     const isImage = (d.type === 'image') || (!d.type && d.img);
                     if (!isImage || d.tab !== currentTab) return;
                     
+                    let timeStr = "תאריך לא ידוע";
+                    if(d.date) {
+                         const dateObj = d.date.toDate();
+                         timeStr = dateObj.toLocaleDateString('he-IL') + ' ' + dateObj.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+                    }
+
                     const card = document.createElement('div');
                     card.className = 'card-img';
                     card.innerHTML = `
                         <img src="${d.img}" onclick="openImg('${d.img}')">
                         <div class="card-info">
-                            <b>${d.avatar||''} ${d.user}</b><br>
-                            <span>${d.desc||''}</span><br>
-                            <button onclick="addLike('${d.id}')" style="border:none; background:none;">🍌 ${d.likes||0}</button>
-                            ${document.body.classList.contains('admin') ? `<button onclick="deletePost('${d.id}')">🗑️</button>` : ''}
+                            <div style="font-weight:bold; font-size:1.1rem;">${d.avatar||''} ${d.user}</div>
+                            <span class="card-date">${timeStr}</span>
+                            ${d.desc ? `<div style="background:rgba(0,0,0,0.05); padding:5px; border-radius:5px; margin:5px 0;">${d.desc}</div>` : ''}
+                            
+                            <div class="card-actions">
+                                <button class="btn-small" onclick="addLike('${d.id}')">🍌 ${d.likes||0}</button>
+                                <button class="btn-small" id="btn-com-${d.id}" onclick="toggleComments('${d.id}')">💬 תגובות (0)</button>
+                                <button class="btn-small" onclick="addComment('${d.id}')">➕ הגב</button>
+                                ${document.body.classList.contains('admin') ? `<button class="btn-small" style="background:#ffcdd2; color:red;" onclick="deletePost('${d.id}')">🗑️</button>` : ''}
+                            </div>
+                            <div id="comments-${d.id}" class="comments-section">טוען...</div>
                         </div>
                     `;
                     container.appendChild(card);
+                    // טעינת תגובות לכל כרטיס
+                    loadComments(d.id);
                 });
             }
         }
 
-        function refreshChatView() {
-            if (currentTab === 'chat') renderContent();
-        }
+        function refreshChatView() { if (currentTab === 'chat') renderContent(); }
 
         function sendChat() {
             const name = document.getElementById('uploaderName').value;
             const text = document.getElementById('chatInput').value;
             if(!name) return alert("כתוב שם!");
             if(!text) return;
-
             db.collection(COLLECTION_NAME).add({
                 type: 'chat', text: text, user: name, avatar: selectedAvatar, tab: 'chat', likes: 0,
                 date: firebase.firestore.FieldValue.serverTimestamp()
@@ -352,7 +315,6 @@
             const desc = document.getElementById('descInput').value;
             if(!file) return;
             document.getElementById('status').innerText = "מעלה...";
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
@@ -362,7 +324,6 @@
                     const max = 800; let w=img.width, h=img.height;
                     if(w>h){if(w>max){h*=max/w;w=max}}else{if(h>max){w*=max/h;h=max}}
                     canvas.width=w; canvas.height=h; ctx.drawImage(img,0,0,w,h);
-                    
                     db.collection(COLLECTION_NAME).add({
                         type: 'image', img: canvas.toDataURL('image/jpeg', 0.6),
                         user: name, avatar: selectedAvatar, desc: desc, tab: currentTab, likes: 0,
@@ -380,9 +341,55 @@
 
         function addLike(id) { db.collection(COLLECTION_NAME).doc(id).update({likes: firebase.firestore.FieldValue.increment(1)}); }
         function deletePost(id) { if(confirm("למחוק?")) db.collection(COLLECTION_NAME).doc(id).delete(); }
-        
         function openImg(u) { document.getElementById('fullImg').src=u; document.getElementById('overlay').style.display='flex'; }
         function closeImg() { document.getElementById('overlay').style.display='none'; }
+
+        // --- לוגיקת תגובות ---
+        function toggleComments(id) {
+            const el = document.getElementById('comments-' + id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function addComment(id) {
+            const name = prompt("מי מגיב?");
+            if (!name) return;
+            const text = prompt("מה התגובה?");
+            if (!text) return;
+            
+            db.collection(COLLECTION_NAME).doc(id).collection("comments").add({
+                user: name,
+                text: text,
+                date: new Date()
+            });
+        }
+
+        function loadComments(id) {
+            db.collection(COLLECTION_NAME).doc(id).collection("comments").orderBy("date", "asc").onSnapshot(snap => {
+                const list = document.getElementById('comments-' + id);
+                const btn = document.getElementById('btn-com-' + id);
+                
+                // עדכון מספר התגובות בכפתור
+                if(btn) btn.innerText = `💬 תגובות (${snap.size})`;
+                
+                if (snap.empty) {
+                    if(list) list.innerHTML = "אין תגובות עדיין.";
+                } else {
+                    let html = "";
+                    snap.forEach(doc => {
+                        const c = doc.data();
+                        const dStr = c.date && c.date.toDate ? c.date.toDate().toLocaleString('he-IL') : "";
+                        html += `
+                            <div class="comment-row">
+                                <span class="comment-user">${c.user}:</span> ${c.text}
+                                <br><span class="comment-time">${dStr}</span>
+                                <div style="clear:both;"></div>
+                            </div>
+                        `;
+                    });
+                    if(list) list.innerHTML = html;
+                }
+            });
+        }
 
         db.collection(COLLECTION_NAME).orderBy("date", "asc").onSnapshot(snap => {
             allData = [];
