@@ -23,9 +23,7 @@
         }
         
         h1 { background: var(--accent); padding: 10px 30px; border-radius: 50px; border: 4px solid #fff; display: inline-block; cursor: pointer; color: #3e2723; user-select: none; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .countdown { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: #d84315; background: rgba(255,255,255,0.5); display: inline-block; padding: 5px 15px; border-radius: 20px; }
-        body.dark-mode .countdown { color: #ff9800; background: rgba(0,0,0,0.5); }
-
+        
         .king-section { 
             background: linear-gradient(45deg, #ffd700, #ffecb3); 
             padding: 15px; border-radius: 20px; margin: 20px auto; max-width: 400px;
@@ -96,8 +94,6 @@
 
     <h1 onclick="secretClick()">Nano Banana Gallery 🍌</h1>
     
-    <div><div class="countdown" id="countdown">טוען שעון...</div></div>
-
     <div id="kingSection" class="king-section">
         <div class="king-badge">👑</div>
         <div class="king-title">מלך הבננה השבועי!</div>
@@ -227,15 +223,6 @@
                 date: firebase.firestore.FieldValue.serverTimestamp(), isBot: true
             });
         }
-
-        const birthdayDate = new Date("April 22, 2026 20:00:00").getTime();
-        setInterval(function() {
-            const now = new Date().getTime();
-            const distance = birthdayDate - now;
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            document.getElementById("countdown").innerHTML = "🎂 יום הולדת 18 עוד: " + days + " ימים ו-" + hours + " שעות ";
-        }, 1000);
 
         function toggleNight() { document.body.classList.toggle('dark-mode'); }
         function secretClick() { clicks++; if(clicks===3){ if(prompt("סיסמת מנהל:")==="1234") { document.body.classList.add('admin'); alert("מצב מנהל הופעל! 🕵️‍♂️"); } clicks=0; } }
