@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nano Banana Gallery Pro 🍌</title>
+    <title>Nano Banana Gallery & Chat 🍌</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <style>
@@ -22,30 +22,39 @@
         
         .container { background: var(--card); padding: 20px; border-radius: 20px; max-width: 500px; margin: 10px auto; border: 2px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
-        input[type="text"] { 
+        input[type="text"], textarea { 
             padding: 12px; border-radius: 10px; border: 1px solid #ccc; width: 85%; 
-            text-align: center; margin-bottom: 10px; background: var(--card); color: var(--text); 
+            text-align: center; margin-bottom: 10px; background: var(--card); color: var(--text); font-family: inherit;
         }
+        textarea { resize: none; height: 60px; }
         
-        .tabs { margin: 20px 0; }
-        button { border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 50px; margin: 5px; transition: 0.2s; }
+        .tabs { margin: 20px 0; display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
+        button { border: none; padding: 10px 15px; font-weight: bold; cursor: pointer; border-radius: 50px; margin: 2px; transition: 0.2s; font-size: 0.9rem; }
         .tab-btn { background: var(--card); border: 2px solid var(--border); color: var(--text); }
-        .tab-btn.active { background: var(--accent); color: black; box-shadow: 0 0 10px orange; }
-        .upload-btn { background: #4caf50; color: white; width: 100%; margin-top: 10px; font-size: 1.1rem; }
+        .tab-btn.active { background: var(--accent); color: black; box-shadow: 0 0 10px orange; transform: scale(1.05); }
+        
+        .upload-btn { background: #4caf50; color: white; width: 100%; margin-top: 5px; font-size: 1.1rem; }
+        .chat-btn { background: #2196F3; color: white; width: 100%; margin-top: 5px; font-size: 1.1rem; }
+        
         .night-toggle { position: fixed; top: 10px; left: 10px; background: #333; color: white; z-index: 100; font-size: 0.8rem; }
 
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 20px auto; }
         
-        .card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; text-align: right; box-shadow: 0 4px 8px rgba(0,0,0,0.1); position: relative; }
+        .card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; text-align: right; box-shadow: 0 4px 8px rgba(0,0,0,0.1); position: relative; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
         .card img { width: 100%; height: 220px; object-fit: cover; cursor: pointer; }
         
         .card-content { padding: 15px; }
         .user-name { font-weight: bold; font-size: 1.1rem; color: var(--accent); text-shadow: 0px 0px 1px black; }
         .upload-date { font-size: 0.75rem; color: #888; margin-bottom: 5px; }
-        .description { font-size: 0.95rem; margin: 8px 0; padding: 5px; background: rgba(0,0,0,0.05); border-radius: 5px; border-right: 3px solid var(--accent); }
+        .description { font-size: 0.95rem; margin: 8px 0; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 8px; border-right: 4px solid var(--accent); }
+        
+        /* עיצוב מיוחד להודעות צ'אט */
+        .chat-text { font-size: 1.1rem; padding: 10px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; margin: 10px 0; white-space: pre-wrap; }
 
         .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-        .action-btn { background: #eee; color: #333; font-size: 0.85rem; padding: 8px 12px; flex: 1; }
+        .action-btn { background: #eee; color: #333; font-size: 0.85rem; padding: 8px 12px; flex: 1; border-radius: 8px; }
         body.dark-mode .action-btn { background: #333; color: white; }
         
         .delete-btn { display: none; background: #ff4444; color: white; flex: 100%; margin-top: 5px; }
@@ -61,6 +70,9 @@
 
         .spy { display: none; font-size: 0.6rem; color: #0f0; background: black; padding: 5px; margin-top: 5px; direction: ltr; }
         body.admin .spy { display: block; }
+        
+        /* הסתרת אזורים */
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -76,15 +88,24 @@
 
     <div class="tabs">
         <button id="btn-real" onclick="switchTab('real')" class="tab-btn active">📸 גלריה אמיתית</button>
-        <button id="btn-nano" onclick="switchTab('nano')" class="tab-btn">🍌 גלריה ננו בננה</button>
+        <button id="btn-nano" onclick="switchTab('nano')" class="tab-btn">🍌 ננו בננה</button>
+        <button id="btn-chat" onclick="switchTab('chat')" class="tab-btn">💬 הצ'אט הסודי</button>
     </div>
 
     <div class="container">
-        <h3>העלאת תמונה חדשה</h3>
-        <input type="text" id="uploaderName" placeholder="השם שלך">
-        <input type="text" id="descInput" placeholder="תיאור קצר (עד 50 תווים)" maxlength="50">
-        <button class="upload-btn" onclick="checkUpload()">➕ העלה עכשיו</button>
-        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="uploadFile()">
+        <input type="text" id="uploaderName" placeholder="השם שלך (חובה)" style="border: 2px solid var(--accent);">
+        
+        <div id="image-upload-area">
+            <input type="text" id="descInput" placeholder="תיאור לתמונה (אופציונלי)" maxlength="50">
+            <button class="upload-btn" onclick="checkUpload()">➕ העלה תמונה</button>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="uploadFile()">
+        </div>
+
+        <div id="chat-upload-area" class="hidden">
+            <textarea id="chatInput" placeholder="כתוב כאן הודעה לחברים..."></textarea>
+            <button class="chat-btn" onclick="sendChat()">🚀 שלח הודעה</button>
+        </div>
+        
         <p id="status" style="font-weight:bold; color:orange;"></p>
     </div>
 
@@ -102,7 +123,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        // כאן החזרנו את זה לגרסה 3 שבה יש את התמונות שלך!
+        // משתמשים באותו מאגר כדי לשמור על התמונות הישנות!
         const COLLECTION_NAME = "banana_v3"; 
         
         let currentTab = 'real';
@@ -122,10 +143,26 @@
         }
 
         function switchTab(t) { 
-            currentTab=t; 
-            document.getElementById('btn-real').className=t==='real'?'tab-btn active':'tab-btn'; 
-            document.getElementById('btn-nano').className=t==='nano'?'tab-btn active':'tab-btn'; 
-            loadImages(); 
+            currentTab = t; 
+            
+            // עדכון כפתורים
+            document.getElementById('btn-real').className = t==='real'?'tab-btn active':'tab-btn'; 
+            document.getElementById('btn-nano').className = t==='nano'?'tab-btn active':'tab-btn'; 
+            document.getElementById('btn-chat').className = t==='chat'?'tab-btn active':'tab-btn'; 
+
+            // החלפת תיבות קלט
+            const imgArea = document.getElementById('image-upload-area');
+            const chatArea = document.getElementById('chat-upload-area');
+            
+            if (t === 'chat') {
+                imgArea.classList.add('hidden');
+                chatArea.classList.remove('hidden');
+            } else {
+                imgArea.classList.remove('hidden');
+                chatArea.classList.add('hidden');
+            }
+
+            loadContent(); 
         }
 
         function checkUpload() { 
@@ -136,6 +173,32 @@
         function openImg(u) { document.getElementById('fullImg').src=u; document.getElementById('overlay').style.display='flex'; }
         function closeImg() { document.getElementById('overlay').style.display='none'; }
 
+        // שליחת הודעת צ'אט
+        function sendChat() {
+            const name = document.getElementById('uploaderName').value;
+            const text = document.getElementById('chatInput').value;
+            
+            if(!name) return alert("מי אתה? כתוב שם!");
+            if(!text) return alert("אי אפשר לשלוח הודעה ריקה!");
+
+            document.getElementById('status').innerText = "שולח... 🚀";
+
+            db.collection(COLLECTION_NAME).add({
+                type: 'chat', // סימון שזה צ'אט ולא תמונה
+                text: text,
+                user: name,
+                tab: 'chat',
+                likes: 0,
+                date: firebase.firestore.FieldValue.serverTimestamp(),
+                dev: navigator.userAgent.includes("Mobile")?"Mobile":"PC",
+                uid: localStorage.getItem('uid') || (localStorage.setItem('uid', Math.random().toString(36).substr(2,5)), localStorage.getItem('uid'))
+            }).then(() => {
+                document.getElementById('status').innerText = "ההודעה נשלחה! ✅";
+                document.getElementById('chatInput').value = "";
+            });
+        }
+
+        // העלאת תמונה
         function uploadFile() {
             const file = document.getElementById('fileInput').files[0];
             const name = document.getElementById('uploaderName').value;
@@ -155,6 +218,7 @@
                     canvas.width=w; canvas.height=h; ctx.drawImage(img,0,0,w,h);
                     
                     db.collection(COLLECTION_NAME).add({
+                        type: 'image',
                         img: canvas.toDataURL('image/jpeg', 0.6),
                         user: name,
                         desc: desc,
@@ -174,13 +238,16 @@
             reader.readAsDataURL(file);
         }
 
-        function loadImages() {
+        // טעינת תוכן (תמונות או הודעות)
+        function loadContent() {
             db.collection(COLLECTION_NAME).orderBy("date", "desc").onSnapshot(snap => {
                 const gal = document.getElementById('gallery'); 
                 gal.innerHTML = "";
                 
                 snap.forEach(doc => {
                     const d = doc.data(); 
+                    
+                    // סינון לפי טאבים
                     if(d.tab !== currentTab) return;
                     
                     const id = doc.id;
@@ -192,25 +259,47 @@
 
                     const card = document.createElement('div'); 
                     card.className = 'card';
-                    card.innerHTML = `
-                        <img src="${d.img}" onclick="openImg('${d.img}')">
-                        <div class="card-content">
-                            <div class="user-name">👤 ${d.user}</div>
-                            <div class="upload-date">${dateStr}</div>
-                            ${d.desc ? `<div class="description">${d.desc}</div>` : ''}
-                            
+                    
+                    // בדיקה אם זה תמונה או צ'אט
+                    let contentHTML = "";
+                    
+                    if (d.type === 'chat') {
+                        // עיצוב לצ'אט
+                        contentHTML = `
+                            <div class="card-content">
+                                <div class="user-name">👤 ${d.user}</div>
+                                <div class="upload-date">${dateStr}</div>
+                                <div class="chat-text">${d.text}</div>
+                            </div>
+                        `;
+                    } else {
+                        // עיצוב לתמונה
+                        contentHTML = `
+                            <img src="${d.img}" onclick="openImg('${d.img}')">
+                            <div class="card-content">
+                                <div class="user-name">👤 ${d.user}</div>
+                                <div class="upload-date">${dateStr}</div>
+                                ${d.desc ? `<div class="description">${d.desc}</div>` : ''}
+                            </div>
+                        `;
+                    }
+
+                    // כפתורים משותפים לכולם
+                    card.innerHTML = contentHTML + `
+                        <div class="card-content" style="padding-top:0;">
                             <div class="actions">
                                 <button class="action-btn" onclick="addLike('${id}')">🍌 ${d.likes||0}</button>
-                                <button class="action-btn" id="btn-com-${id}" onclick="toggleCom('${id}')">💬 תגובות</button>
-                                <button class="action-btn" onclick="postCom('${id}')">➕ הגב</button>
-                                <button class="delete-btn" onclick="deletePost('${id}')">🗑️ מחיקה (מנהל)</button>
+                                ${d.type !== 'chat' ? `<button class="action-btn" id="btn-com-${id}" onclick="toggleCom('${id}')">💬 תגובות</button>` : ''} 
+                                ${d.type !== 'chat' ? `<button class="action-btn" onclick="postCom('${id}')">➕ הגב</button>` : ''}
+                                <button class="delete-btn" onclick="deletePost('${id}')">🗑️ מחיקה</button>
                             </div>
-                            
-                            <div class="spy">UID: ${d.uid} | DEV: ${d.dev}</div>
-                            <div class="comments" id="com-${id}">טוען...</div>
+                            <div class="spy">UID: ${d.uid}</div>
+                            ${d.type !== 'chat' ? `<div class="comments" id="com-${id}">טוען...</div>` : ''}
                         </div>`;
+                        
                     gal.appendChild(card); 
-                    loadComments(id);
+                    
+                    if(d.type !== 'chat') loadComments(id);
                 });
             });
         }
@@ -220,8 +309,8 @@
         }
 
         function deletePost(id) {
-            if(confirm("בטוח שאתה רוצה למחוק את התמונה הזו לנצח? 😱")) {
-                db.collection(COLLECTION_NAME).doc(id).delete().then(() => alert("נמחק!"));
+            if(confirm("למחוק את זה? 🤔")) {
+                db.collection(COLLECTION_NAME).doc(id).delete();
             }
         }
 
@@ -241,23 +330,17 @@
             db.collection(COLLECTION_NAME).doc(id).collection("comments").orderBy("d", "asc").onSnapshot(snap => {
                 const e = document.getElementById('com-'+id); 
                 const btn = document.getElementById('btn-com-'+id);
+                if(btn) btn.innerText = `💬 תגובות (${snap.size})`;
                 
-                btn.innerText = `💬 תגובות (${snap.size})`;
-                e.innerHTML = snap.empty ? "אין תגובות עדיין... תהיה הראשון!" : "";
-                
+                e.innerHTML = snap.empty ? "אין תגובות." : "";
                 snap.forEach(doc => {
                     const c = doc.data(); 
-                    const time = c.d.toDate ? c.d.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "";
-                    e.innerHTML += `
-                        <div class="comment">
-                            <b>${c.u}:</b> ${c.t} 
-                            <span style="font-size:0.6rem; color:#888; float:left;">${time}</span>
-                        </div>`;
+                    e.innerHTML += `<div class="comment"><b>${c.u}:</b> ${c.t}</div>`;
                 });
             });
         }
         
-        loadImages();
+        loadContent();
     </script>
 </body>
 </html>
