@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nano Banana Gallery VIP 👑</title>
+    <title>Nano Banana Streak 🔥</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -11,13 +11,9 @@
 
     <style>
         :root {
-            --bg: #fff9c4;
-            --card: #ffffff;
-            --text: #333;
-            --accent: #ffd700;
-            --me-bubble: #fff176;
-            --other-bubble: #ffffff;
-            --border: #e0e0e0;
+            --bg: #fff9c4; --card: #ffffff; --text: #333; --accent: #ffd700;
+            --me-bubble: #fff176; --other-bubble: #ffffff; --border: #e0e0e0;
+            --fire: #ff5722;
         }
         body.dark-mode {
             --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #ffee00;
@@ -29,9 +25,21 @@
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 100 100"><text x="50%" y="50%" font-size="30" text-anchor="middle" dy=".3em" opacity="0.1">🍌</text></svg>');
         }
         
-        .header { background: var(--card); padding: 10px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--accent); }
-        h1 { margin: 0; font-size: 1.5rem; color: #5d4037; display: inline-block; cursor: pointer; }
+        .header { background: var(--card); padding: 5px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--accent); }
+        h1 { margin: 5px; font-size: 1.4rem; color: #5d4037; cursor: pointer; }
         
+        /* --- אזור הסטריק --- */
+        .streak-bar {
+            background: linear-gradient(90deg, #ff9800, #ff5722);
+            color: white; padding: 10px; margin: 10px auto; width: 90%; max-width: 600px;
+            border-radius: 15px; box-shadow: 0 4px 15px rgba(255, 87, 34, 0.4);
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        .streak-count { font-size: 1.5rem; text-shadow: 1px 1px 2px black; }
+        .streak-progress { font-size: 0.9rem; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 10px; }
+
         .container { background: var(--card); padding: 15px; max-width: 600px; margin: 10px auto; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
 
         .avatar-selection { margin-bottom: 10px; display: flex; justify-content: center; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
@@ -52,50 +60,41 @@
         
         .action-area { display: flex; flex-direction: column; gap: 5px; align-items: center; }
         .send-btn { background: #4caf50; color: white; border-radius: 50px; padding: 10px 40px; margin-top: 5px; font-size: 1rem; }
-        .bot-btn { background: #9c27b0; color: white; border-radius: 50px; font-size: 0.9rem; margin-top: 5px; padding: 5px 20px; }
+        
+        /* כפתורי בוט */
+        .bot-controls { display: flex; gap: 10px; margin-top: 5px; }
+        .bot-btn { background: #9c27b0; color: white; border-radius: 50px; font-size: 0.85rem; padding: 8px 15px; flex: 1; }
+        .teach-btn { background: #ff9800; color: white; border-radius: 50px; font-size: 0.85rem; padding: 8px 15px; flex: 1; }
 
         .night-toggle { position: fixed; top: 15px; left: 15px; background: #333; color: white; z-index: 2000; font-size: 1rem; border-radius: 50px; padding: 5px 10px; }
 
-        /* --- גלריה וכרטיסים --- */
+        /* גלריה */
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; padding: 10px; max-width: 800px; margin: 0 auto; }
-        
-        .card-img { 
-            background: var(--card); border-radius: 15px; overflow: hidden; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1); border: 1px solid var(--border);
-            text-align: right; 
-        }
+        .card-img { background: var(--card); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border: 1px solid var(--border); text-align: right; }
         .card-img img { width: 100%; height: 220px; object-fit: cover; }
         .card-info { padding: 12px; }
         .card-date { font-size: 0.75rem; color: #888; margin-top: 5px; display: block; }
-        
         .card-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
         .btn-small { background: #eee; color: #333; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; flex: 1; }
         body.dark-mode .btn-small { background: #333; color: #fff; }
 
-        /* --- אזור תגובות --- */
+        /* תגובות */
         .comments-section { display: none; background: rgba(0,0,0,0.03); padding: 10px; margin-top: 10px; border-radius: 10px; font-size: 0.9rem; }
         .comment-row { border-bottom: 1px solid var(--border); padding: 5px 0; }
         .comment-user { font-weight: bold; color: #ef6c00; }
-        .comment-time { float: left; font-size: 0.7rem; color: #999; }
-
-        /* --- צ'אט --- */
+        
+        /* צ'אט */
         .chat-list { display: flex; flex-direction: column; gap: 8px; padding: 20px 10px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
         .msg-row { display: flex; width: 100%; margin-bottom: 5px; }
-        .msg-row.me { justify-content: flex-end; } 
-        .msg-row.other { justify-content: flex-start; } 
-        
-        .msg-bubble {
-            max-width: 75%; padding: 10px 15px; border-radius: 15px; position: relative;
-            font-size: 1rem; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            word-wrap: break-word; text-align: right;
-        }
+        .msg-row.me { justify-content: flex-end; } .msg-row.other { justify-content: flex-start; } 
+        .msg-bubble { max-width: 75%; padding: 10px 15px; border-radius: 15px; position: relative; font-size: 1rem; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.1); word-wrap: break-word; text-align: right; }
         .msg-row.me .msg-bubble { background-color: var(--me-bubble); border-radius: 15px 0 15px 15px; border: 1px solid #fdd835; }
         .msg-row.other .msg-bubble { background-color: var(--other-bubble); border-radius: 0 15px 15px 15px; border: 1px solid #eee; }
         .msg-row.bot .msg-bubble { background-color: #f3e5f5; border: 2px solid #ab47bc; margin: 0 auto; text-align: center; }
         body.dark-mode .msg-row.bot .msg-bubble { background-color: #4a148c; border-color: #7b1fa2; }
-
         .sender-name { font-size: 0.75rem; font-weight: bold; color: #ef6c00; margin-bottom: 4px; }
         .timestamp { font-size: 0.65rem; color: #999; text-align: left; margin-top: 4px; display: block; }
+        .like-btn { font-size: 0.8rem; background: none; border: none; cursor: pointer; color: #888; float: left; margin-right: 5px; }
 
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:3000; justify-content:center; align-items:center; flex-direction:column; }
         #overlay img { max-width:95%; max-height:80%; border-radius: 10px; border: 2px solid white; }
@@ -114,6 +113,17 @@
 
     <div class="header">
         <h1 onclick="secretClick()">Nano Banana 🍌</h1>
+        
+        <div id="streakBar" class="streak-bar">
+            <div style="text-align:right;">
+                <div style="font-size:0.8rem;">🔥 סטריק קבוצתי</div>
+                <div id="streakDays" class="streak-count">0 ימים</div>
+            </div>
+            <div class="streak-progress">
+                <div id="streakStatus">0/3 חברים להיום</div>
+            </div>
+        </div>
+
         <div class="tabs">
             <button id="btn-chat" onclick="switchTab('chat')" class="tab-btn active">💬 צ'אט</button>
             <button id="btn-real" onclick="switchTab('real')" class="tab-btn">📸 גלריה</button>
@@ -128,7 +138,10 @@
         <div id="chat-input-area" class="action-area">
             <textarea id="chatInput" placeholder="הקלד הודעה..."></textarea>
             <button class="send-btn" onclick="sendChat()">שליחה ➤</button>
-            <button class="bot-btn" onclick="triggerBot()">🤖 בננה-בוט: רד עליי</button>
+            <div class="bot-controls">
+                <button class="bot-btn" onclick="triggerBot()">🤖 בננה-בוט: רד עליי</button>
+                <button class="teach-btn" onclick="teachBot()">🎓 למד את הבוט</button>
+            </div>
         </div>
 
         <div id="img-input-area" class="action-area hidden">
@@ -154,7 +167,6 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        // מוודאים שאנחנו משתמשים באותו מאגר נתונים כמו תמיד
         const COLLECTION_NAME = "banana_v3"; 
         
         let currentTab = 'chat';
@@ -163,27 +175,16 @@
         const avatars = ['🍌', '🦍', '😎', '🤖', '👽', '💩', '🤡', '👻', '⚽', '🚬'];
         let selectedAvatar = avatars[0];
 
-        const roasts = [
+        // מאגר ירידות בסיסי (המשתמשים יכולים להוסיף עליו)
+        const baseRoasts = [
             "הטסטר שלך ביקש תוספת סיכון למשכורת אחרי הטסט איתך.",
             "בנות לא מסננות אותך, הן פשוט חוסמות את המספר מראש.",
             "יש לך פרופיל צבאי 97... בלהיות נודניק.",
             "היד קדמית שלך נראית כמו נקניקייה, והאחורית כמו פירה.",
             "אתה נראה כמו מישהו שיוציא פטור זקן על 'כיעור יתר'.",
-            "אם היית בצבא, היית מקבל צל\"ש על יכולת השינה בשמירות.",
             "הריז שלך במינוס, אתה חייב כריזמה למס הכנסה.",
             "אתה תהיה הנהג תורן לנצח, כי אף אחד לא סומך עליך עם האלכוהול.",
-            "הדבר היחיד שאתה כובש זה מלפפונים חמוצים.",
-            "אתה נראה כמו NPC שנתקע בקיר ב-GTA.",
-            "ההורים שלך עדיין מחכים שתסיים את גיל ההתבגרות.",
-            "במכון אתה עושה בעיקר אימון לסת ואימון אגודל בטיקטוק.",
-            "המוח שלך במצב טיסה כבר 18 שנה.",
-            "בטינדר אפילו הבוטים עושים עליך סמול.",
-            "אתה נוהג כמו מישהו שקיבל רישיון בקומבינה בדימונה.",
-            "יש לך כריזמה של מורה למתמטיקה ביום הורים.",
-            "הריאות שלך נראות כמו אגזוז של טויוטה קורולה.",
-            "אתה מעשן וויפ בטעם תות ומרגיש גנגסטר.",
-            "איך נכשלת בטסט פנימי? הבוחן זה המורה שלך!",
-            "יש לך הקלות במבחנים כי המורים מרחמים עליך."
+            "המוח שלך במצב טיסה כבר 18 שנה."
         ];
 
         function initAvatars() {
@@ -217,6 +218,121 @@
             renderContent();
         }
 
+        // --- לוגיקת סטריק ---
+        function checkStreak() {
+            const streakDocRef = db.collection('stats').doc('streak');
+            
+            streakDocRef.onSnapshot(doc => {
+                const today = new Date().toDateString();
+                let streakData = doc.exists ? doc.data() : { currentStreak: 0, lastDate: "", contributors: [] };
+                
+                // בדיקה אם עבר יום (ולא אתמול) - שבירת סטריק
+                if (streakData.lastDate && streakData.lastDate !== today) {
+                    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+                    if (streakData.lastDate !== yesterday.toDateString()) {
+                        // עברו יומיים, הסטריק נשבר
+                        if (streakData.currentStreak > 0) {
+                            streakDocRef.update({ currentStreak: 0, contributors: [], lastDate: today });
+                            streakData.currentStreak = 0;
+                            streakData.contributors = [];
+                        }
+                    } else {
+                        // יום חדש, סטריק נשמר אבל צריך מאמץ חדש
+                        if (streakData.date !== today) { // עדכון ראשון להיום
+                             // אנחנו לא מאפסים את ה-contributors כאן כדי לא ליצור לולאה, זה יקרה בהעלאה
+                        }
+                    }
+                }
+
+                // תצוגה
+                const count = streakData.contributors ? streakData.contributors.length : 0;
+                
+                // איפוס ויזואלי אם התאריך בדאטה הוא של אתמול
+                let displayCount = count;
+                if (streakData.lastDate !== today) displayCount = 0;
+
+                document.getElementById('streakDays').innerText = `${streakData.currentStreak} ימים`;
+                document.getElementById('streakStatus').innerText = `${displayCount}/3 חברים להיום`;
+                
+                if (displayCount >= 3) {
+                    document.getElementById('streakStatus').innerText = "✅ הושלם להיום!";
+                    document.getElementById('streakBar').style.background = "linear-gradient(90deg, #4caf50, #8bc34a)";
+                } else {
+                    document.getElementById('streakBar').style.background = "linear-gradient(90deg, #ff9800, #ff5722)";
+                }
+            });
+        }
+        checkStreak();
+
+        function updateStreak(userName) {
+            const streakDocRef = db.collection('stats').doc('streak');
+            const today = new Date().toDateString();
+            
+            db.runTransaction(transaction => {
+                return transaction.get(streakDocRef).then(doc => {
+                    let data = doc.exists ? doc.data() : { currentStreak: 0, lastDate: "", contributors: [] };
+                    
+                    // אם יום חדש לגמרי
+                    if (data.lastDate !== today) {
+                        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+                        // אם זה לא אתמול (כלומר עברו יומיים), הסטריק מתאפס
+                        if (data.lastDate !== yesterday.toDateString() && data.lastDate !== "") {
+                            data.currentStreak = 0;
+                        }
+                        data.contributors = []; // יום חדש, רשימה חדשה
+                        data.lastDate = today;
+                    }
+                    
+                    // הוספת המשתמש אם לא קיים
+                    if (!data.contributors.includes(userName)) {
+                        data.contributors.push(userName);
+                        // אם הגענו ל-3, מגדילים סטריק
+                        if (data.contributors.length === 3) {
+                            data.currentStreak++;
+                            // אפקט חגיגה
+                            confetti({ particleCount: 200, spread: 100 });
+                        }
+                    }
+                    
+                    transaction.set(streakDocRef, data);
+                });
+            });
+        }
+
+        // --- לוגיקת בוט אישי ---
+        function teachBot() {
+            const roast = prompt("כתוב ירידה חדשה על מישהו מהחבורה:\n(הבוט ישמור את זה ויוכל להשתמש בזה אחר כך)");
+            if (roast && roast.length > 3) {
+                db.collection('roasts').add({
+                    text: roast,
+                    addedBy: document.getElementById('uploaderName').value || 'Anonymous',
+                    date: new Date()
+                }).then(() => {
+                    alert("הבוט למד! 😈\nעכשיו הירידה הזו נכנסה למאגר.");
+                });
+            }
+        }
+
+        async function triggerBot() {
+            // שליפת ירידות מהמשתמשים
+            let customRoasts = [];
+            try {
+                const snapshot = await db.collection('roasts').get();
+                snapshot.forEach(doc => customRoasts.push(doc.data().text));
+            } catch (e) { console.log(e); }
+
+            // איחוד עם המאגר הבסיסי
+            const fullRoastList = [...baseRoasts, ...customRoasts];
+            const txt = fullRoastList[Math.floor(Math.random() * fullRoastList.length)];
+            
+            db.collection(COLLECTION_NAME).add({
+                type: 'chat', text: txt, user: 'BananaBot', avatar: '🤖', tab: 'chat', likes: 0, isBot: true,
+                date: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            confetti();
+        }
+
+        // --- פונקציות רגילות ---
         function renderContent() {
             const container = document.getElementById('content-area');
             const myName = document.getElementById('uploaderName').value.trim();
@@ -224,22 +340,15 @@
             if (currentTab === 'chat') {
                 container.className = 'chat-list';
                 container.innerHTML = '';
-                
-                // בצ'אט אנחנו רוצים מהישן לחדש (הודעה חדשה למטה)
-                // מכיוון ש-allData מגיע הפוך (חדש למעלה), אנחנו הופכים אותו רק לצורך הצגת הצ'אט
                 let chatData = [...allData].reverse(); 
-
                 chatData.forEach(d => {
                     if (d.type && d.type !== 'chat') return; 
                     if (!d.type && d.img) return;
-
                     if (d.type === 'chat') {
                         const isMe = d.user === myName;
                         const isBot = d.isBot;
-                        let rowClass = 'other';
-                        if (isBot) rowClass = 'bot'; else if (isMe) rowClass = 'me';
-                        const bubble = document.createElement('div');
-                        bubble.className = `msg-row ${rowClass}`;
+                        let rowClass = 'other'; if (isBot) rowClass = 'bot'; else if (isMe) rowClass = 'me';
+                        const bubble = document.createElement('div'); bubble.className = `msg-row ${rowClass}`;
                         let timeStr = d.date ? d.date.toDate().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'}) : "";
                         let nameHtml = '';
                         if (!isMe && !isBot) nameHtml = `<div class="sender-name">${d.avatar||''} ${d.user}</div>`;
@@ -248,51 +357,24 @@
                         container.appendChild(bubble);
                     }
                 });
-                // גלילה למטה
                 setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
 
             } else {
-                // גלריה - רוצים חדש למעלה (allData כבר ממויין ככה)
                 container.className = 'gallery-grid';
                 container.innerHTML = '';
-
                 allData.forEach(d => {
                     const isImage = (d.type === 'image') || (!d.type && d.img);
                     if (!isImage || d.tab !== currentTab) return;
-                    
-                    let timeStr = "";
-                    if(d.date) {
-                         const dateObj = d.date.toDate();
-                         timeStr = dateObj.toLocaleDateString('he-IL') + ' ' + dateObj.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = 'card-img';
-                    card.innerHTML = `
-                        <img src="${d.img}" onclick="openImg('${d.img}')">
-                        <div class="card-info">
-                            <div style="font-weight:bold; font-size:1.1rem;">${d.avatar||''} ${d.user}</div>
-                            <span class="card-date">${timeStr}</span>
-                            ${d.desc ? `<div style="background:rgba(0,0,0,0.05); padding:5px; border-radius:5px; margin:5px 0;">${d.desc}</div>` : ''}
-                            
-                            <div class="card-actions">
-                                <button class="btn-small" onclick="addLike('${d.id}')">🍌 ${d.likes||0}</button>
-                                <button class="btn-small" id="btn-com-${d.id}" onclick="toggleComments('${d.id}')">💬 תגובות</button>
-                                <button class="btn-small" onclick="addComment('${d.id}')">➕ הגב</button>
-                                ${document.body.classList.contains('admin') ? `<button class="btn-small" style="background:#ffcdd2; color:red;" onclick="deletePost('${d.id}')">🗑️</button>` : ''}
-                            </div>
-                            <div id="comments-${d.id}" class="comments-section">טוען...</div>
-                        </div>
-                    `;
+                    let timeStr = d.date ? d.date.toDate().toLocaleDateString('he-IL') + ' ' + d.date.toDate().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'}) : "";
+                    const card = document.createElement('div'); card.className = 'card-img';
+                    card.innerHTML = `<img src="${d.img}" onclick="openImg('${d.img}')"><div class="card-info"><div style="font-weight:bold; font-size:1.1rem;">${d.avatar||''} ${d.user}</div><span class="card-date">${timeStr}</span>${d.desc ? `<div style="background:rgba(0,0,0,0.05); padding:5px; border-radius:5px; margin:5px 0;">${d.desc}</div>` : ''}<div class="card-actions"><button class="btn-small" onclick="addLike('${d.id}')">🍌 ${d.likes||0}</button><button class="btn-small" id="btn-com-${d.id}" onclick="toggleComments('${d.id}')">💬 תגובות</button><button class="btn-small" onclick="addComment('${d.id}')">➕ הגב</button>${document.body.classList.contains('admin') ? `<button class="btn-small" style="background:#ffcdd2; color:red;" onclick="deletePost('${d.id}')">🗑️</button>` : ''}</div><div id="comments-${d.id}" class="comments-section">טוען...</div></div>`;
                     container.appendChild(card);
-                    // טעינת תגובות ישנות
                     loadComments(d.id);
                 });
             }
         }
 
         function refreshChatView() { if (currentTab === 'chat') renderContent(); }
-
         function sendChat() {
             const name = document.getElementById('uploaderName').value;
             const text = document.getElementById('chatInput').value;
@@ -306,20 +388,7 @@
             confetti({ particleCount: 50, spread: 50, origin: { y: 0.8 } });
         }
 
-        function triggerBot() {
-            const txt = roasts[Math.floor(Math.random() * roasts.length)];
-            db.collection(COLLECTION_NAME).add({
-                type: 'chat', text: txt, user: 'BananaBot', avatar: '🤖', tab: 'chat', likes: 0, isBot: true,
-                date: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            confetti();
-        }
-
-        function checkUpload() {
-            if(!document.getElementById('uploaderName').value) return alert("כתוב שם!");
-            document.getElementById('fileInput').click();
-        }
-
+        function checkUpload() { if(!document.getElementById('uploaderName').value) return alert("כתוב שם!"); document.getElementById('fileInput').click(); }
         function uploadFile() {
             const file = document.getElementById('fileInput').files[0];
             const name = document.getElementById('uploaderName').value;
@@ -340,6 +409,7 @@
                         user: name, avatar: selectedAvatar, desc: desc, tab: currentTab, likes: 0,
                         date: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(() => {
+                        updateStreak(name); // עדכון הסטריק הקבוצתי
                         document.getElementById('status').innerText = "";
                         document.getElementById('descInput').value = "";
                         confetti();
@@ -354,61 +424,11 @@
         function deletePost(id) { if(confirm("למחוק?")) db.collection(COLLECTION_NAME).doc(id).delete(); }
         function openImg(u) { document.getElementById('fullImg').src=u; document.getElementById('overlay').style.display='flex'; }
         function closeImg() { document.getElementById('overlay').style.display='none'; }
+        function toggleComments(id) { const el = document.getElementById('comments-' + id); el.style.display = (el.style.display === 'block') ? 'none' : 'block'; }
+        function addComment(id) { const name = prompt("מי מגיב?"); if (!name) return; const text = prompt("מה התגובה?"); if (!text) return; db.collection(COLLECTION_NAME).doc(id).collection("comments").add({ user: name, text: text, date: new Date() }); }
+        function loadComments(id) { db.collection(COLLECTION_NAME).doc(id).collection("comments").orderBy("date", "asc").onSnapshot(snap => { const list = document.getElementById('comments-' + id); const btn = document.getElementById('btn-com-' + id); if(btn) btn.innerText = `💬 תגובות (${snap.size})`; if (snap.empty) { if(list) list.innerHTML = "אין תגובות."; } else { let html = ""; snap.forEach(doc => { const c = doc.data(); const dStr = c.date && c.date.toDate ? c.date.toDate().toLocaleString('he-IL') : ""; html += `<div class="comment-row"><span class="comment-user">${c.user}:</span> ${c.text}<br><span class="comment-time">${dStr}</span><div style="clear:both;"></div></div>`; }); if(list) list.innerHTML = html; } }); }
 
-        // --- מנגנון התגובות (הישן והטוב) ---
-        function toggleComments(id) {
-            const el = document.getElementById('comments-' + id);
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-        }
-
-        function addComment(id) {
-            const name = prompt("מי מגיב?");
-            if (!name) return;
-            const text = prompt("מה התגובה?");
-            if (!text) return;
-            db.collection(COLLECTION_NAME).doc(id).collection("comments").add({
-                user: name, text: text, date: new Date()
-            });
-        }
-
-        function loadComments(id) {
-            db.collection(COLLECTION_NAME).doc(id).collection("comments").orderBy("date", "asc").onSnapshot(snap => {
-                const list = document.getElementById('comments-' + id);
-                const btn = document.getElementById('btn-com-' + id);
-                
-                // עדכון מספר התגובות בכפתור
-                if(btn) btn.innerText = `💬 תגובות (${snap.size})`;
-                
-                if (snap.empty) {
-                    if(list) list.innerHTML = "אין תגובות.";
-                } else {
-                    let html = "";
-                    snap.forEach(doc => {
-                        const c = doc.data();
-                        const dStr = c.date && c.date.toDate ? c.date.toDate().toLocaleString('he-IL') : "";
-                        html += `
-                            <div class="comment-row">
-                                <span class="comment-user">${c.user}:</span> ${c.text}
-                                <br><span class="comment-time">${dStr}</span>
-                                <div style="clear:both;"></div>
-                            </div>
-                        `;
-                    });
-                    if(list) list.innerHTML = html;
-                }
-            });
-        }
-
-        // שליפת מידע: "desc" אומר חדש למעלה. זה טוב לגלריה. לצ'אט נהפוך את זה בקוד.
-        db.collection(COLLECTION_NAME).orderBy("date", "desc").onSnapshot(snap => {
-            allData = [];
-            snap.forEach(doc => {
-                let d = doc.data();
-                d.id = doc.id;
-                allData.push(d);
-            });
-            renderContent();
-        });
+        db.collection(COLLECTION_NAME).orderBy("date", "desc").onSnapshot(snap => { allData = []; snap.forEach(doc => { let d = doc.data(); d.id = doc.id; allData.push(d); }); renderContent(); });
     </script>
 </body>
 </html>
