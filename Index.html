@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nano Banana Chat & Gallery 🍌</title>
+    <title>Nano Banana Gallery VIP 👑</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -11,114 +11,113 @@
 
     <style>
         :root {
-            --bg: #efe7dd; /* צבע רקע וואטסאפ */
-            --card: #ffffff; 
-            --text: #333; 
-            --accent: #00a884; /* ירוק וואטסאפ */
-            --my-msg: #d9fdd3;
-            --other-msg: #ffffff;
+            --bg: #fff9c4; /* צהוב בננה */
+            --card: #ffffff;
+            --text: #333;
+            --accent: #ffd700; /* זהב */
+            --me-bubble: #fff176; /* בועה שלי - צהוב בהיר */
+            --other-bubble: #ffffff; /* בועה של אחרים - לבן */
         }
         body.dark-mode {
-            --bg: #0b141a; 
-            --card: #1f2c34; 
-            --text: #e9edef; 
-            --accent: #00a884;
-            --my-msg: #005c4b;
-            --other-msg: #202c33;
+            --bg: #121212;
+            --card: #1e1e1e;
+            --text: #e0e0e0;
+            --accent: #ffee00;
+            --me-bubble: #fbc02d;
+            --other-bubble: #424242;
         }
         body { 
             font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text);
             text-align: center; padding: 0; margin: 0; transition: 0.3s;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); /* רקע דמוי וואטסאפ */
-            background-repeat: repeat;
+            /* החזרנו את רקע הבננות! */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 100 100"><text x="50%" y="50%" font-size="30" text-anchor="middle" dy=".3em" opacity="0.1">🍌</text></svg>');
         }
         
-        /* כותרת */
-        .header { background: var(--card); padding: 10px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-        h1 { margin: 0; font-size: 1.2rem; color: var(--text); display: inline-block; }
+        .header { background: var(--card); padding: 10px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--accent); }
+        h1 { margin: 0; font-size: 1.5rem; color: #5d4037; display: inline-block; cursor: pointer; }
         
-        .container { background: var(--card); padding: 15px; max-width: 600px; margin: 0 auto; border-bottom: 1px solid #ddd; }
-        body.dark-mode .container { border-bottom: 1px solid #333; }
+        .container { background: var(--card); padding: 15px; max-width: 600px; margin: 10px auto; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
 
         /* בחירת אווטאר */
         .avatar-selection { margin-bottom: 10px; display: flex; justify-content: center; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
-        .avatar-option { font-size: 1.5rem; cursor: pointer; padding: 5px; border-radius: 50%; opacity: 0.5; transition: 0.2s; }
-        .avatar-option.selected { opacity: 1; background: rgba(0, 168, 132, 0.2); transform: scale(1.1); }
+        .avatar-option { font-size: 1.6rem; cursor: pointer; padding: 5px; border-radius: 50%; opacity: 0.6; transition: 0.2s; }
+        .avatar-option.selected { opacity: 1; background: rgba(255, 215, 0, 0.3); transform: scale(1.2); border: 2px solid var(--accent); }
 
         input[type="text"], textarea { 
-            padding: 10px; border-radius: 20px; border: 1px solid #ccc; width: 90%; 
-            text-align: center; margin-bottom: 10px; background: var(--card); color: var(--text); 
-            font-family: inherit;
+            padding: 12px; border-radius: 20px; border: 2px solid #eee; width: 90%; 
+            text-align: center; margin-bottom: 10px; background: #f9f9f9; color: var(--text); 
+            font-family: inherit; font-size: 1rem;
         }
+        body.dark-mode input[type="text"], body.dark-mode textarea { background: #333; border-color: #555; }
         
-        .tabs { margin: 10px 0; display: flex; justify-content: center; gap: 5px; }
-        button { border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 20px; font-size: 0.9rem; }
-        .tab-btn { background: transparent; border: 1px solid var(--text); color: var(--text); }
-        .tab-btn.active { background: var(--accent); color: white; border: 1px solid var(--accent); }
+        .tabs { margin: 10px 0; display: flex; justify-content: center; gap: 10px; }
+        button { border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 20px; font-size: 0.9rem; transition: 0.2s; }
+        .tab-btn { background: transparent; border: 2px solid var(--accent); color: var(--text); }
+        .tab-btn.active { background: var(--accent); color: #3e2723; transform: scale(1.05); }
         
         .action-area { display: flex; flex-direction: column; gap: 5px; align-items: center; }
-        .send-btn { background: var(--accent); color: white; border-radius: 50px; padding: 10px 30px; margin-top: 5px; }
-        .bot-btn { background: #9c27b0; color: white; border-radius: 50px; font-size: 0.8rem; margin-top: 5px; }
+        .send-btn { background: #4caf50; color: white; border-radius: 50px; padding: 10px 40px; margin-top: 5px; font-size: 1rem; }
+        .bot-btn { background: #9c27b0; color: white; border-radius: 50px; font-size: 0.9rem; margin-top: 5px; padding: 5px 20px; }
 
-        .night-toggle { position: fixed; top: 10px; left: 10px; background: #333; color: white; z-index: 2000; font-size: 0.8rem; border-radius: 50px; padding: 5px 10px; }
+        .night-toggle { position: fixed; top: 15px; left: 15px; background: #333; color: white; z-index: 2000; font-size: 1rem; border-radius: 50px; padding: 5px 10px; }
 
-        /* --- הגלריה (תמונות) --- */
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 10px; max-width: 800px; margin: 0 auto; }
-        .card-img { background: var(--card); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card-img img { width: 100%; height: 150px; object-fit: cover; }
-        .card-info { padding: 5px; font-size: 0.8rem; text-align: right; }
+        /* --- הגלריה --- */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 10px; max-width: 800px; margin: 0 auto; }
+        .card-img { background: var(--card); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border: 1px solid var(--accent); }
+        .card-img img { width: 100%; height: 160px; object-fit: cover; }
+        .card-info { padding: 8px; font-size: 0.85rem; text-align: right; }
 
-        /* --- הצ'אט (וואטסאפ סטייל) --- */
-        .chat-list { display: flex; flex-direction: column; gap: 10px; padding: 20px 10px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+        /* --- הצ'אט (סידור וואטסאפ) --- */
+        .chat-list { display: flex; flex-direction: column; gap: 8px; padding: 20px 10px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
         
         .msg-row { display: flex; width: 100%; margin-bottom: 5px; }
-        .msg-row.me { justify-content: flex-end; } /* אני בשמאל */
-        .msg-row.other { justify-content: flex-start; } /* אחרים בימין */
-        
-        /* בגלל RTL, flex-end זה שמאל ו-flex-start זה ימין */
+        /* ב-RTL: flex-end זה צד שמאל (אני), flex-start זה צד ימין (אחרים) */
+        .msg-row.me { justify-content: flex-end; } 
+        .msg-row.other { justify-content: flex-start; } 
         
         .msg-bubble {
             max-width: 75%;
-            padding: 8px 12px;
+            padding: 10px 15px;
             border-radius: 15px;
             position: relative;
-            font-size: 0.95rem;
+            font-size: 1rem;
             line-height: 1.4;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             word-wrap: break-word;
             text-align: right;
         }
 
-        /* עיצוב בועה שלי (ירוק) */
+        /* בועה שלי - צהוב בננה */
         .msg-row.me .msg-bubble {
-            background-color: var(--my-msg);
+            background-color: var(--me-bubble);
             border-radius: 15px 0 15px 15px;
+            border: 1px solid #fdd835;
         }
 
-        /* עיצוב בועה של אחרים (לבן) */
+        /* בועה של אחרים - לבן */
         .msg-row.other .msg-bubble {
-            background-color: var(--other-msg);
+            background-color: var(--other-bubble);
             border-radius: 0 15px 15px 15px;
+            border: 1px solid #eee;
         }
         
-        /* עיצוב בוט */
+        /* בוט */
         .msg-row.bot .msg-bubble {
             background-color: #f3e5f5;
-            border: 1px solid #9c27b0;
+            border: 2px solid #ab47bc;
             margin: 0 auto;
             text-align: center;
         }
-        body.dark-mode .msg-row.bot .msg-bubble { background-color: #4a148c; border: none; }
+        body.dark-mode .msg-row.bot .msg-bubble { background-color: #4a148c; border-color: #7b1fa2; }
 
-        .sender-name { font-size: 0.75rem; font-weight: bold; color: var(--accent); margin-bottom: 2px; }
+        .sender-name { font-size: 0.75rem; font-weight: bold; color: #ef6c00; margin-bottom: 4px; }
         .timestamp { font-size: 0.65rem; color: #999; text-align: left; margin-top: 4px; display: block; }
-        body.dark-mode .timestamp { color: #aaa; }
-
+        
         .like-btn { font-size: 0.8rem; background: none; border: none; cursor: pointer; color: #888; float: left; margin-right: 5px; }
 
-        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:3000; justify-content:center; align-items:center; flex-direction:column; }
-        #overlay img { max-width:95%; max-height:80%; border-radius: 10px; }
-        .close-btn { background: white; color: black; margin-top: 20px; padding: 10px 30px; border:none; border-radius:50px; font-weight:bold; cursor:pointer;}
+        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:3000; justify-content:center; align-items:center; flex-direction:column; }
+        #overlay img { max-width:95%; max-height:80%; border-radius: 10px; border: 2px solid white; }
+        .close-btn { background: var(--accent); color: black; margin-top: 20px; padding: 10px 30px; border:none; border-radius:50px; font-weight:bold; cursor:pointer;}
 
         .hidden { display: none; }
     </style>
@@ -143,12 +142,12 @@
 
     <div class="container">
         <div id="avatar-selection" class="avatar-selection"></div>
-        <input type="text" id="uploaderName" placeholder="כתוב את השם שלך כאן (כדי לזהות הודעות)" oninput="refreshChatView()">
+        <input type="text" id="uploaderName" placeholder="השם שלך (כדי שהודעות יהיו בצד שמאל)" oninput="refreshChatView()">
 
         <div id="chat-input-area" class="action-area">
             <textarea id="chatInput" placeholder="הקלד הודעה..."></textarea>
             <button class="send-btn" onclick="sendChat()">שליחה ➤</button>
-            <button class="bot-btn" onclick="triggerBot()">🤖 בננה-בוט</button>
+            <button class="bot-btn" onclick="triggerBot()">🤖 בננה-בוט: רד עליי</button>
         </div>
 
         <div id="img-input-area" class="action-area hidden">
@@ -178,12 +177,12 @@
         
         let currentTab = 'chat';
         let clicks = 0;
-        let allData = []; // נשמור את המידע כדי לרענן בלי קריאות מיותרות
+        let allData = []; 
 
         const avatars = ['🍌', '🦍', '😎', '🤖', '👽', '💩', '🤡', '👻', '⚽', '🚬'];
         let selectedAvatar = avatars[0];
 
-        // מאגר ירידות
+        // מאגר ירידות (Savage)
         const roasts = [
             "הטסטר שלך ביקש תוספת סיכון למשכורת אחרי הטסט איתך.",
             "בנות לא מסננות אותך, הן פשוט חוסמות את המספר מראש.",
@@ -229,11 +228,9 @@
 
         function switchTab(t) { 
             currentTab = t;
-            // עדכון כפתורים
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(t === 'chat' ? 'btn-chat' : (t==='real'?'btn-real':'btn-nano')).classList.add('active');
 
-            // החלפת אזור קלט
             const chatArea = document.getElementById('chat-input-area');
             const imgArea = document.getElementById('img-input-area');
             
@@ -247,13 +244,11 @@
             renderContent();
         }
 
-        // --- לוגיקה של צ'אט ---
         function renderContent() {
             const container = document.getElementById('content-area');
             const myName = document.getElementById('uploaderName').value.trim();
 
             if (currentTab === 'chat') {
-                // מצב צ'אט
                 container.className = 'chat-list';
                 container.innerHTML = '';
                 
@@ -263,21 +258,16 @@
                     const isMe = d.user === myName;
                     const isBot = d.isBot;
                     
-                    // קביעת המחלקה (אני / אחר / בוט)
                     let rowClass = 'other';
                     if (isBot) rowClass = 'bot';
                     else if (isMe) rowClass = 'me';
 
-                    // בועה
                     const bubble = document.createElement('div');
                     bubble.className = `msg-row ${rowClass}`;
                     
-                    // תאריך
                     let timeStr = "";
                     if(d.date) timeStr = d.date.toDate().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
 
-                    // תוכן הבועה
-                    // אם זה אני - לא צריך שם. אם זה אחר - צריך שם.
                     let nameHtml = '';
                     if (!isMe && !isBot) {
                         nameHtml = `<div class="sender-name">${d.avatar||''} ${d.user}</div>`;
@@ -298,11 +288,8 @@
                     `;
                     container.appendChild(bubble);
                 });
-                // גלילה למטה
-                // window.scrollTo(0, document.body.scrollHeight);
 
             } else {
-                // מצב גלריה
                 container.className = 'gallery-grid';
                 container.innerHTML = '';
 
@@ -325,12 +312,10 @@
             }
         }
 
-        // האזנה לשינוי בשם כדי לרענן צדדים בצ'אט
         function refreshChatView() {
             if (currentTab === 'chat') renderContent();
         }
 
-        // --- פעולות ---
         function sendChat() {
             const name = document.getElementById('uploaderName').value;
             const text = document.getElementById('chatInput').value;
@@ -397,7 +382,6 @@
         function openImg(u) { document.getElementById('fullImg').src=u; document.getElementById('overlay').style.display='flex'; }
         function closeImg() { document.getElementById('overlay').style.display='none'; }
 
-        // האזנה לשינויים ב-Firebase
         db.collection(COLLECTION_NAME).orderBy("date", "asc").onSnapshot(snap => {
             allData = [];
             snap.forEach(doc => {
@@ -405,12 +389,8 @@
                 d.id = doc.id;
                 allData.push(d);
             });
-            // אם אנחנו בגלריה, נהפוך את הסדר (החדש למעלה)
             if(currentTab !== 'chat') allData.reverse();
-            
             renderContent();
-            
-            // גלילה אוטומטית למטה בצ'אט רק אם נוספה הודעה חדשה
             if(currentTab === 'chat') setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
         });
     </script>
