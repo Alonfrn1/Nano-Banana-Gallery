@@ -29,7 +29,6 @@
         body { 
             font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text);
             text-align: center; padding: 0; margin: 0; transition: 0.3s;
-            /* החזרנו את רקע הבננות! */
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 100 100"><text x="50%" y="50%" font-size="30" text-anchor="middle" dy=".3em" opacity="0.1">🍌</text></svg>');
         }
         
@@ -38,7 +37,6 @@
         
         .container { background: var(--card); padding: 15px; max-width: 600px; margin: 10px auto; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
 
-        /* בחירת אווטאר */
         .avatar-selection { margin-bottom: 10px; display: flex; justify-content: center; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
         .avatar-option { font-size: 1.6rem; cursor: pointer; padding: 5px; border-radius: 50%; opacity: 0.6; transition: 0.2s; }
         .avatar-option.selected { opacity: 1; background: rgba(255, 215, 0, 0.3); transform: scale(1.2); border: 2px solid var(--accent); }
@@ -67,11 +65,10 @@
         .card-img img { width: 100%; height: 160px; object-fit: cover; }
         .card-info { padding: 8px; font-size: 0.85rem; text-align: right; }
 
-        /* --- הצ'אט (סידור וואטסאפ) --- */
+        /* --- הצ'אט --- */
         .chat-list { display: flex; flex-direction: column; gap: 8px; padding: 20px 10px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
         
         .msg-row { display: flex; width: 100%; margin-bottom: 5px; }
-        /* ב-RTL: flex-end זה צד שמאל (אני), flex-start זה צד ימין (אחרים) */
         .msg-row.me { justify-content: flex-end; } 
         .msg-row.other { justify-content: flex-start; } 
         
@@ -87,21 +84,18 @@
             text-align: right;
         }
 
-        /* בועה שלי - צהוב בננה */
         .msg-row.me .msg-bubble {
             background-color: var(--me-bubble);
             border-radius: 15px 0 15px 15px;
             border: 1px solid #fdd835;
         }
 
-        /* בועה של אחרים - לבן */
         .msg-row.other .msg-bubble {
             background-color: var(--other-bubble);
             border-radius: 0 15px 15px 15px;
             border: 1px solid #eee;
         }
         
-        /* בוט */
         .msg-row.bot .msg-bubble {
             background-color: #f3e5f5;
             border: 2px solid #ab47bc;
@@ -182,7 +176,6 @@
         const avatars = ['🍌', '🦍', '😎', '🤖', '👽', '💩', '🤡', '👻', '⚽', '🚬'];
         let selectedAvatar = avatars[0];
 
-        // מאגר ירידות (Savage)
         const roasts = [
             "הטסטר שלך ביקש תוספת סיכון למשכורת אחרי הטסט איתך.",
             "בנות לא מסננות אותך, הן פשוט חוסמות את המספר מראש.",
@@ -253,48 +246,57 @@
                 container.innerHTML = '';
                 
                 allData.forEach(d => {
-                    if (d.type !== 'chat') return;
-                    
-                    const isMe = d.user === myName;
-                    const isBot = d.isBot;
-                    
-                    let rowClass = 'other';
-                    if (isBot) rowClass = 'bot';
-                    else if (isMe) rowClass = 'me';
+                    // מציגים רק הודעות צ'אט
+                    if (d.type && d.type !== 'chat') return; 
+                    // אם אין TYPE בכלל (דאטה ישן), אנחנו נניח שזה תמונה ולא נציג בצ'אט
+                    if (!d.type && d.img) return;
 
-                    const bubble = document.createElement('div');
-                    bubble.className = `msg-row ${rowClass}`;
-                    
-                    let timeStr = "";
-                    if(d.date) timeStr = d.date.toDate().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+                    // במקרה שנוצרו הודעות צ'אט בלי טייפ (נדיר, אבל ליתר ביטחון)
+                    // או שזה פשוט הטקסטים החדשים
+                    if (d.type === 'chat') {
+                        const isMe = d.user === myName;
+                        const isBot = d.isBot;
+                        
+                        let rowClass = 'other';
+                        if (isBot) rowClass = 'bot';
+                        else if (isMe) rowClass = 'me';
 
-                    let nameHtml = '';
-                    if (!isMe && !isBot) {
-                        nameHtml = `<div class="sender-name">${d.avatar||''} ${d.user}</div>`;
-                    }
-                    if (isBot) {
-                        nameHtml = `<div class="sender-name">🤖 בננה-בוט</div>`;
-                    }
+                        const bubble = document.createElement('div');
+                        bubble.className = `msg-row ${rowClass}`;
+                        
+                        let timeStr = "";
+                        if(d.date) timeStr = d.date.toDate().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
 
-                    bubble.innerHTML = `
-                        <div class="msg-bubble">
-                            ${nameHtml}
-                            <div>${d.text}</div>
-                            <div style="margin-top:5px;">
-                                <button class="like-btn" onclick="addLike('${d.id}')">🍌 ${d.likes||0}</button>
-                                <span class="timestamp">${timeStr}</span>
+                        let nameHtml = '';
+                        if (!isMe && !isBot) nameHtml = `<div class="sender-name">${d.avatar||''} ${d.user}</div>`;
+                        if (isBot) nameHtml = `<div class="sender-name">🤖 בננה-בוט</div>`;
+
+                        bubble.innerHTML = `
+                            <div class="msg-bubble">
+                                ${nameHtml}
+                                <div>${d.text}</div>
+                                <div style="margin-top:5px;">
+                                    <button class="like-btn" onclick="addLike('${d.id}')">🍌 ${d.likes||0}</button>
+                                    <span class="timestamp">${timeStr}</span>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                    container.appendChild(bubble);
+                        `;
+                        container.appendChild(bubble);
+                    }
                 });
 
             } else {
+                // מצב גלריה (תמונות)
                 container.className = 'gallery-grid';
                 container.innerHTML = '';
 
                 allData.forEach(d => {
-                    if (d.type !== 'image' || d.tab !== currentTab) return;
+                    // כאן התיקון הגדול:
+                    // מציגים אם זה סומן כ'image' או שאין סוג בכלל (תמונות ישנות)
+                    // וגם מוודאים שזה בטאב הנכון
+                    
+                    const isImage = (d.type === 'image') || (!d.type && d.img);
+                    if (!isImage || d.tab !== currentTab) return;
                     
                     const card = document.createElement('div');
                     card.className = 'card-img';
